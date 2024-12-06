@@ -1,0 +1,20 @@
+meta {
+  name: signup_
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{Port}}/api/auth/signup
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "firstName": "User2",
+    "lastName": "User",
+    "Email": "User2@gmail.com",
+    "Password": "12456946781"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "717778610339",
+    "project_id": "sportsperson-2b116",
+    "storage_bucket": "sportsperson-2b116.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:717778610339:android:519ae816d49878ac54b716",
+        "android_client_info": {
+          "package_name": "com.sportperson.social"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "717778610339-fsuakpagl8s2v6utdeieolfae5q5j5no.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sportperson.social",
+            "certificate_hash": "b4ccce8fd5c771a1904705681d80c920218202a5"
+          }
+        },
+        {
+          "client_id": "717778610339-cgbkqjq4v696v3ghketbrjc64ffgjcm3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSUB2yMMblvedw8td07hwpY9OXWPkGqpQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "717778610339-cgbkqjq4v696v3ghketbrjc64ffgjcm3.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "717778610339-hvekh21jreom5247re8186c0a76u883s.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sportperson.social"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

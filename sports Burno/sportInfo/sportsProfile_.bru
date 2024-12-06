@@ -1,0 +1,15 @@
+meta {
+  name: sportsProfile_
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{Port}}/api/user/sports_view
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NDZlNzQ2M2Q0YmVjYWYzY2VkNDZhOCIsInV1aWQiOiJtR19KMTBRX28yRkt5WmhKSVlNX2YiLCJFbWFpbF9JRCI6IlVzZXIyQGdtYWlsLmNvbSIsImlhdCI6MTczMjY5OTk4NywiZXhwIjoxNzMyNzg2Mzg3fQ.iwgiXuxhMyboYPbFyLkksJtFYiK76GVB_sz3KTUqQ9Q
+}
