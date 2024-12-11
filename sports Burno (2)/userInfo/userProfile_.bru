@@ -1,0 +1,15 @@
+meta {
+  name: userProfile_
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{Port}}/api/user/profile
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NTgwNDI0ZmY2ZjNiN2ZjYTcwMTBlOCIsInV1aWQiOiJLbHA3ZC1vU2RiTlBFVmNuaEdtNFMiLCJFbWFpbF9JRCI6InZpZ25lc2hiYWxhbm12Z3MyMDAzQGdtYWlsLmNvbSIsImlhdCI6MTczMzgyNjIwMiwiZXhwIjoxNzMzOTEyNjAyfQ.DQ7zJTjfqrW57-_WQbUT22sNvdin-7xcCY0MyBdgXQE
+}

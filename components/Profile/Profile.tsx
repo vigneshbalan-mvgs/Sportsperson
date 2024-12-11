@@ -20,6 +20,7 @@ import {
 } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
 import Sports from "./Sports";
+import { router } from "expo-router";
 
 const Profile = () => {
   const [initializing, setInitializing] = useState(true);
@@ -94,11 +95,21 @@ const Profile = () => {
 
       <View style={styles.userInfoSection}>
         <View style={styles.statsRow}>
-          <TouchableOpacity style={styles.statItem}>
+          <TouchableOpacity
+            style={styles.statItem}
+            onPress={() => {
+              router.push("/(insider)/profile/Stats");
+            }}
+          >
             <Text style={styles.statValue}>120</Text>
             <Text style={styles.statLabel}>Cheerer</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.statItem}>
+          <TouchableOpacity
+            style={styles.statItem}
+            onPress={() => {
+              router.push("/(insider)/profile/Stats");
+            }}
+          >
             <Text style={styles.statValue}>500</Text>
             <Text style={styles.statLabel}>Cheering</Text>
           </TouchableOpacity>

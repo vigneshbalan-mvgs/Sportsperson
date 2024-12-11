@@ -2,33 +2,40 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import auth from "@react-native-firebase/auth";
+import * as SecureStore from "expo-secure-store";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Progress from "react-native-progress";
+import { PORT, fetchToken } from "const/PORT";
 
 import { colors } from "../const/colors";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 
+async function getSecureStoreItem(key: any) {
+  try {
+    const result = await SecureStore.getItemAsync(key);
+    console.log(result);
+    return result ? JSON.parse(result) : null;
+  } catch (error) {
+    console.error("Error reading secure store:", error);
+    return null;
+  }
+}
+
 export default function SplashScreen() {
   const router = useRouter();
-  const [progress, setProgress] = useState(0); // Progress state
-  const [user, setUser] = useState(null); // Current user state
+  const [progress, setProgress] = useState(0);
+  const [user, setUser] = useState(null);
 
-  const delayTime = 10; // Initial delay (ms)
-  const progressSpeed = 80; // Progress increment interval (ms)
-  const progressIncrement = 0.05; // Increment value
-  //
-  // const delayTime = 0; // Initial delay (ms)
-  // const progressSpeed = 100; // Progress increment interval (ms)
-  // const progressIncrement = 10; // Increment value
-
-  // Function to manage progress
+  const delayTime = 10;
+  const progressSpeed = 80;
+  const progressIncrement = 0.05;
   const startProgress = () => {
     setTimeout(() => {
       const interval = setInterval(() => {
         setProgress((prev) => {
           if (prev >= 1) {
             clearInterval(interval);
-            return 1; // Ensure progress doesn't exceed 1
+            return 1;
           }
           return prev + progressIncrement;
         });
@@ -38,23 +45,30 @@ export default function SplashScreen() {
 
   useFocusEffect(
     React.useCallback(() => {
-      const subscriber = auth().onAuthStateChanged((currentUser) => {
-        if (__DEV__)
-          console.log(currentUser ? "User logged in" : "User not logged in");
-        setUser(currentUser);
-        startProgress(); // Start the progress after determining user
+      console.log("Component focused");
+      const subscriber = auth().onAuthStateChanged(async (currentUser) => {
+        const isLoggedIn = await getSecureStoreItem("isLoggedIn");
+        setUser(currentUser || isLoggedIn);
+        startProgress();
       });
-      return () => subscriber(); // Cleanup on unmount
+      return () => {
+        console.log("Cleaning up focus effect");
+        subscriber();
+      };
     }, []),
   );
 
-  // Handle navigation when progress completes
+  useEffect(() => {
+    console.log(PORT);
+    fetchToken();
+  }, []); // Logs only once when component mounts
+
   useEffect(() => {
     if (progress >= 1) {
       if (user) {
-        router.replace("/(insider)/(tabs)/Home/"); // Navigate to Home
+        router.replace("/(insider)/(tabs)/Home/");
       } else {
-        router.replace("/getstarted"); // Navigate to getstarted
+        router.replace("/getstarted");
       }
     }
   }, [progress, user, router]);

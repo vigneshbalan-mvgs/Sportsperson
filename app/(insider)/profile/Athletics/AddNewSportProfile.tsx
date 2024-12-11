@@ -118,6 +118,7 @@ const AddNewSportProfile = () => {
             placeholder="No of Years"
             keyboardType="numeric"
           />
+          <TextInputComponent placeholder="Position / Best At" />
           <Text style={constStyles.labelText}>No of Matches</Text>
           <TextInputComponent
             placeholder="No of Matches"

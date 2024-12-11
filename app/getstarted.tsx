@@ -5,6 +5,7 @@ import { Link, router } from "expo-router";
 import { colors, spacing, br, bw, fontSizes } from "../const/colors";
 // import constStyles from "../const/Styles.js";
 import constStyles from "@/const/Styles";
+import * as SecureStore from "expo-secure-store";
 
 export default function GetStarted() {
   return (
@@ -31,7 +32,9 @@ export default function GetStarted() {
         </Text>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.replace("/login")}
+          onPress={async () => {
+            router.replace("/login");
+          }}
         >
           <Text style={styles.buttonText}>GET STARTED</Text>
         </TouchableOpacity>

@@ -2,14 +2,15 @@ import { StyleSheet, Text, View } from "react-native";
 import React from "react";
 import BackButton from "@components/back";
 
-const checkPlayers = () => {
+const request = () => {
   return (
     <View>
-      <Text>Team Name</Text>
+      <BackButton />
+      <Text>request</Text>
     </View>
   );
 };
 
-export default checkPlayers;
+export default request;
 
 const styles = StyleSheet.create({});

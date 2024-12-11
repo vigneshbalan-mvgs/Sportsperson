@@ -1,0 +1,54 @@
+meta {
+  name: SaveProfile_
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{Port}}/api/user/profile_save
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NTgwNDI0ZmY2ZjNiN2ZjYTcwMTBlOCIsInV1aWQiOiJLbHA3ZC1vU2RiTlBFVmNuaEdtNFMiLCJFbWFpbF9JRCI6InZpZ25lc2hiYWxhbm12Z3MyMDAzQGdtYWlsLmNvbSIsImlhdCI6MTczMzgyNTgwOSwiZXhwIjoxNzMzOTEyMjA5fQ.JvRMcSg14yX_z3O0Sc3484YLi-YOjnjiLdmsIcRmLEA
+}
+
+body:json {
+  {
+    "Nickname": "JohnDoe",
+    "Phone_Number": "9876543210",
+    "Date_of_Birth": "1990-01-01",
+    "Gender": "Male",
+    "Education": {
+      "school": [
+        "High School A"
+      ],
+      "college": [
+        "University A"
+      ]
+    },
+    "Work": "Software Engineer",
+    "Club": "Tech Club"
+  }
+}
+
+body:form-urlencoded {
+  : 
+}
+
+body:multipart-form {
+  Profile_ImgURL: @file(/home/mvgs/Pictures/Wal/taki-tachibana-6000x3378-14949.jpg)
+  Nickname: MVGS
+  Phone_Number: 7092601683
+  Date_of_Birth: 2003-02-19
+  Gender: Male
+  Education[school][0]: School A
+  Education[school][1]: School B
+  Education[school][2]: School C
+  Education[college][0]: College A
+  Education[college][1]: College B
+  Education[college][2]: College C
+  Work: Software Developer
+  Club: TamilClub
+}

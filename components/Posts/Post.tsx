@@ -20,7 +20,6 @@ import {
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
-import { TapGestureHandler } from "react-native-gesture-handler";
 import {
   heightPercentageToDP as hp,
   widthPercentageToDP as wp,
@@ -341,7 +340,9 @@ const CommentSectionOverlay = ({ isVisible, onClose }) => {
 
 const overlayStyles = StyleSheet.create({
   overlayContainer: {
-    flex: 1,
+    position: "absolute",
+    width: "100%",
+    height: "100%",
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.5)",

@@ -11,6 +11,7 @@ import PagerView from "react-native-pager-view";
 import { colors } from "@/const/colors"; // Import colors from the const file
 import Info from "@components/info/Info";
 import News from "@components/info/News";
+import constStyles from "@/const/Styles";
 
 const MyPager = () => {
   // State to track the current page index
@@ -36,15 +37,15 @@ const MyPager = () => {
   const getTabStyle = (index) => {
     // Active tab styles
     const activeStyle = {
-      backgroundColor: colors.primary, // Use primary color for active tab
       borderBottomWidth: 3,
-      borderBottomColor: "#fff",
+      borderBottomColor: colors.primary,
     };
 
     // Inactive tab styles
     const inactiveStyle = {
       backgroundColor: "transparent",
       borderBottomWidth: 0,
+      opacity: 0.5,
       borderBottomColor: "transparent",
     };
 
@@ -53,7 +54,7 @@ const MyPager = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={constStyles.container}>
       <BackButton />
       {/* Top Bar with active tab display */}
 
@@ -98,18 +99,15 @@ const MyPager = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5", // Light background color for the container
   },
   pagerView: {
     flex: 1,
   },
   topBar: {
-    marginTop: 80,
     height: 60,
     flexDirection: "row", // Horizontal tab layout
     width: "100%", // Control the width of the tab bar
     justifyContent: "center",
-    backgroundColor: "#fff",
   },
   tab: {
     paddingVertical: 10,

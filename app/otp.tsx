@@ -1,62 +1,118 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, TextInput, Button } from "react-native";
-import { useRouter } from "expo-router";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from "react-native";
+import { OtpInput } from "react-native-otp-entry";
+import React, { useState, useEffect } from "react";
+import { useRoute } from "@react-navigation/native";
+import { router } from "expo-router";
+import BackButton from "@components/back";
+import { colors, fontSizes, spacing, br, bw } from "../const/colors";
+import constStyles from "../const/Styles";
 
-import auth from "@react-native-firebase/auth";
-
-export default function OTP() {
+export default function OtpVerification() {
+  const route = useRoute();
+  const { data, otp } = route.params; // Access the OTP, bearer token, and email
+  console.log("Verifying OTP:", otp, data); // Log the received OTP and token
+  const token = data;
   const [code, setCode] = useState("");
-  const [error, setError] = useState("");
-  const router = useRouter();
-  const { query } = router;
+  const [loading, setLoading] = useState(false);
 
-  const verify = async () => {
-    try {
-      await auth().signInWithVerificationId(query.email as string, code);
-      router.push("/(tabs)/Home");
-    } catch (e: any) {
-      setError(e.message);
+  // Function to handle OTP verification
+  const handleVerify = async (code) => {
+    if (code === otp) {
+      // Make the API request to verify the OTP
+      try {
+        setLoading(true);
+        const url = "http://147.79.68.157:4500/api/auth/verify";
+        const options = {
+          method: "POST",
+          headers: {
+            authorization: `Bearer ${data}`, // Use the Bearer token from route.params
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ code }),
+        };
+
+        const response = await fetch(url, options);
+        const status = await response.json();
+        console.log(status);
+
+        if (status.status == true) {
+          router.replace("/login");
+        } else {
+          // Handle incorrect OTP scenario (e.g., show an error message)
+          alert("Incorrect OTP. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error verifying OTP:", error);
+        alert("An error occurred. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      alert("Incorrect OTP. Please try again.");
     }
   };
 
+  useEffect(() => {
+    // Ensure the keyboard appears when the OTP input is focused
+    Keyboard.dismiss(); // Dismiss keyboard if open when the screen loads
+  }, []);
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Enter OTP</Text>
-      <TextInput
-        style={styles.input}
-        value={code}
-        onChangeText={(text) => setCode(text)}
-        placeholder="Enter OTP"
-        keyboardType="number-pad"
-      />
-      <Button title="Verify" onPress={verify} />
-      {error && <Text style={styles.error}>{error}</Text>}
-    </View>
+    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+      {/* Dismiss keyboard on clicking outside */}
+      <View style={constStyles.container}>
+        <BackButton />
+        <View style={{ flex: 1, alignItems: "flex-start", marginTop: 70 }}>
+          <View style={styles.pinCodeContainer}>
+            <Text style={constStyles.subheadingText}>Check your email</Text>
+            <Text style={constStyles.textAlignLeft}>
+              We sent OTP to {token}
+            </Text>
+          </View>
+          <View style={styles.otpcontainer}>
+            <OtpInput
+              numberOfDigits={6}
+              focusStickBlinkingDuration={500}
+              onTextChange={(text) => setCode(text)} // Store the user input
+              onFilled={(text) => {
+                console.log(`OTP is ${text}`);
+                handleVerify(text); // Call handleVerify when OTP is filled
+              }}
+              textInputProps={{
+                accessibilityLabel: "One-Time Password",
+                autoFocus: true, // Ensure the first input receives focus
+              }}
+            />
+          </View>
+          <Text style={constStyles.textAlignLeft}>
+            Don't receive the code?
+            <Text style={constStyles.linkText}>Resend code</Text>
+          </Text>
+        </View>
+      </View>
+    </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 20,
     flex: 1,
-    justifyContent: "center",
   },
-  title: {
-    fontSize: 24,
-    marginBottom: 20,
+  pinCodeContainer: {
+    flexDirection: "column",
+    justifyContent: "space-between",
+    width: "100%",
+    marginBottom: spacing.sm,
   },
-  input: {
-    marginVertical: 5,
-    height: 50,
-    borderWidth: 1,
-    borderRadius: 5,
-    padding: 10,
-    backgroundColor: "#fff",
-  },
-  error: {
-    fontSize: 16,
-    color: "red",
-    marginTop: 10,
+  otpcontainer: {
+    marginTop: spacing.lg,
+    gap: 30,
+    marginBottom: spacing.lg,
   },
 });
-

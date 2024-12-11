@@ -23,6 +23,9 @@ import Post from "@components/Posts/Post";
 import PostMain from "@components/Posts/PostMain";
 import { ScreenStackHeaderSubview } from "react-native-screens";
 import PasswordInput from "@components/Input";
+import Video from "@components/Posts/Video";
+import constStyles from "@/const/Styles";
+import Posts from "@/components/Posts/Post";
 
 function Home() {
   const [initializing, setInitializing] = useState(true);
@@ -80,6 +83,20 @@ function Home() {
     <View style={styles.container}>
       <Topbar />
       <PostMain />
+
+      {/* <ScrollView */}
+      {/*   showsVerticalScrollIndicator={false} */}
+      {/*   style={[constStyles.ScreenContainer, { width: "100%" }]} */}
+      {/* > */}
+      {/*   <Video /> */}
+      {/*   <Posts /> */}
+      {/*   <Posts /> */}
+      {/*   <Posts /> */}
+      {/*   <Video /> */}
+      {/*   <Posts /> */}
+      {/*   <Posts /> */}
+      {/*   <Video /> */}
+      {/* </ScrollView> */}
       <Toast />
     </View>
   );

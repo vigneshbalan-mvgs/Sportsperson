@@ -29,6 +29,7 @@ import {
 } from "react-native-responsive-screen";
 import { FontAwesome } from "@expo/vector-icons";
 import PhoneNumberInput from "@components/PhoneNumberInput";
+import { PORT } from "@/const/PORT";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -40,73 +41,56 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
 
   const register = async () => {
-    if (
-      !email ||
-      !password ||
-      !firstname ||
-      !lastname ||
-      !phoneNumber ||
-      password !== confirmPassword
-    ) {
-      alert("Please fill in all fields correctly.");
-      return;
-    }
-
-    setLoading(true);
     try {
-      const userCredential = await auth().createUserWithEmailAndPassword(
-        email,
-        password,
-      );
-      const user = userCredential.user;
+      if (
+        !email ||
+        !password ||
+        !firstname ||
+        !lastname ||
+        !phoneNumber ||
+        password !== confirmPassword
+      ) {
+        alert("Please fill in all fields correctly.");
+        return;
+      }
 
-      // Update the user's profile
-      await user.updateProfile({
-        displayName: `${firstname} ${lastname}`,
+      console.log("button clicked");
+
+      setLoading(true); // Start loading before fetch
+      const response = await fetch(`${PORT}/api/auth/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          Email: email,
+          Password: password,
+          firstName: firstname,
+          lastName: lastname,
+        }),
       });
+      console.log(response);
 
-      // Send verification email if not already verified
-      if (!user.emailVerified) {
-        await user.sendEmailVerification();
-        alert(
-          "Registration successful! Check your email for verification. Your verification link will expire in 24 hours.",
-        );
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
-      // Navigate to login page
-      router.replace("/login");
-    } catch (e: any) {
-      const err = e as FirebaseError;
+      const data = await response.json();
+      console.log(data);
 
-      // Handle specific Firebase errors
-      if (err.code === "auth/email-already-in-use") {
-        alert(
-          "Email is already in use. If you have not received a verification email, we will send it again.",
-        );
-
-        // Attempt to sign in the user temporarily to resend the verification email
-        try {
-          const userCredential = await auth().signInWithEmailAndPassword(
-            email,
-            password,
-          );
-          const existingUser = userCredential.user;
-
-          // Only resend verification if the user is signed in and the email is not verified
-          if (existingUser && !existingUser.emailVerified) {
-            await existingUser.sendEmailVerification();
-            alert("Verification email resent. Please check your inbox.");
-          }
-        } catch (err) {
-          alert("Error signing in: " + err.message);
-        }
+      if (data.status) {
+        router.push({
+          pathname: "/otpverfication",
+          params: { data: data.token, otp: data.Verification },
+        });
       } else {
-        alert("Registration error: " + err.message);
+        alert(data.message);
       }
+    } catch (error) {
+      console.error("Error during signup:", error);
     } finally {
-      setLoading(false);
+      setLoading(false); // Ensure loading is stopped in all cases
     }
   };
+
   return (
     <View style={[constStyles.container]}>
       <ScrollView

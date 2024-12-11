@@ -39,6 +39,7 @@
       "expo-router",
       [
         "expo-build-properties",
+
         {
           "ios": {
             "useFrameworks": "static"
@@ -47,7 +48,8 @@
       ],
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

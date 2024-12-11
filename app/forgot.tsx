@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import auth from "@react-native-firebase/auth";
+import { PORT } from "@/const/PORT";
 
 // Components
 import BackButton from "@components/back";
@@ -40,25 +41,48 @@ export default function Forgot() {
 
     setLoading(true);
     setError(null);
+    const url = `${PORT}/api/auth/forget_password`;
+    const options = {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        Email: email,
+      }),
+    };
 
     try {
-      // Send password reset email
-      await auth().sendPasswordResetEmail(email.trim());
-      Alert.alert(
-        "Success",
-        "Password reset email sent! Please check your inbox.",
-        [{ text: "OK", onPress: () => router.push("/login") }],
-      );
-      console.info("Password reset email sent!");
-    } catch (e) {
-      console.error("Error sending password reset email:", e);
-      setError(
-        e.message ||
-          "An error occurred while trying to send the password reset email.",
-      );
-    } finally {
+      const response = await fetch(url, options);
+      const data = await response.json();
+      router.push({
+        pathname: "/otp",
+        params: { data: data.Token, otp: data.Verification },
+      });
+
       setLoading(false);
+      console.log(data);
+    } catch (error) {
+      console.error(error);
     }
+
+    // try {
+    //   // Send password reset email
+    //   await auth().sendPasswordResetEmail(email.trim());
+    //
+    //   Alert.alert(
+    //     "Success",
+    //     "Password reset email sent! Please check your inbox.",
+    //     [{ text: "OK", onPress: () => router.push("/login") }],
+    //   );
+    //   console.info("Password reset email sent!");
+    // } catch (e) {
+    //   console.error("Error sending password reset email:", e);
+    //   setError(
+    //     e.message ||
+    //       "An error occurred while trying to send the password reset email.",
+    //   );
+    // } finally {
+    //   setLoading(false);
+    // }
   };
 
   return (

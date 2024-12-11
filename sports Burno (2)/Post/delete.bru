@@ -1,0 +1,23 @@
+meta {
+  name: delete
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{Port}}/api/user/post/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NDgwNzhhMTExMDZlZTNhYWMwNGUxMCIsInV1aWQiOiJyWTVPYXEtdjJLdWlJTjEyUjI4bzYiLCJFbWFpbF9JRCI6InNjaGFpbmdva3VsMUBnbWFpbC5jb20iLCJpYXQiOjE3MzI3NzM4NDAsImV4cCI6MTczMjg2MDI0MH0.VAH49uLTFbIkVsVTnKeYMA84F6zHLhcApfSphO2sGr0
+}
+
+body:json {
+  {
+      "PostImage_URL":"https://placehold.co/300x300/pink/orange?text=Post+Image+1" ,
+      "Location":"Madurai",
+      "description": "This is My First Description"
+  }
+}

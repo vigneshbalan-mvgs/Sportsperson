@@ -3,7 +3,7 @@ import { TouchableOpacity, StyleSheet, View } from "react-native";
 import { AntDesign } from "@expo/vector-icons"; // Import the icon library
 import { colors } from "../const/colors";
 
-const BackButton: React.FC<{
+const RightIcon: React.FC<{
   icon?: string;
   onPress?: () => void; // Custom onPress action
 }> = ({ icon = "plus", onPress }) => {
@@ -54,4 +54,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BackButton;
+export default RightIcon;

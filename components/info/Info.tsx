@@ -1,116 +1,74 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Image,
   Text,
   StyleSheet,
-  Modal,
-  ImageBackground,
-  Pressable,
   SafeAreaView,
   TouchableOpacity,
-  Linking,
   FlatList,
-  StatusBar,
 } from "react-native";
+import { Dropdown } from "react-native-element-dropdown";
+import { colors } from "@/const/colors";
+import { faker } from "@faker-js/faker";
+import { router } from "expo-router";
 
-const mockData = [
-  {
-    id: "1",
-    name: "Gadget Hub",
-    description: "The ultimate destination for tech lovers.",
-    image: "https://via.placeholder.com/150",
-    details:
-      "Gadget Hub offers the latest gadgets and tech accessories at unbeatable prices.",
-    recentPurchase: "Wireless Earbuds (20 mins ago)",
-    address: "123 Tech Street, Silicon Valley",
-    mapLink: "https://goo.gl/maps/123techstreet",
-    contact: "+1-800-TECHHUB",
-    openingHours: "9:00 AM - 9:00 PM",
-  },
-  {
-    id: "2",
-    name: "Daily Grocers",
-    description: "Fresh groceries and daily essentials.",
-    image: "https://via.placeholder.com/150",
-    details:
-      "Daily Grocers provides farm-fresh produce, dairy products, and household items.",
-    recentPurchase: "Fresh Apples (10 mins ago)",
-    address: "45 Market Road, Springfield",
-    mapLink: "https://goo.gl/maps/45marketroad",
-    contact: "+1-555-GROCERY",
-    openingHours: "7:00 AM - 10:00 PM",
-  },
-  {
-    id: "3",
-    name: "Book Haven",
-    description: "A paradise for book lovers.",
-    image: "https://via.placeholder.com/150",
-    details:
-      "Book Haven has a vast collection of books, from fiction to non-fiction and academic resources.",
-    recentPurchase: "The Alchemist by Paulo Coelho (5 mins ago)",
-    address: "78 Library Lane, Oxford",
-    mapLink: "https://goo.gl/maps/78librarylane",
-    contact: "+1-444-BOOKS",
-    openingHours: "10:00 AM - 8:00 PM",
-  },
-  {
-    id: "4",
-    name: "Fashion Fiesta",
-    description: "Trendy fashion at great prices.",
-    image: "https://via.placeholder.com/150",
-    details:
-      "Fashion Fiesta brings you the latest in men’s, women’s, and kids’ fashion.",
-    recentPurchase: "Men's Jacket - Winter Collection (2 hours ago)",
-    address: "22 Style Avenue, Beverly Hills",
-    mapLink: "https://goo.gl/maps/22styleavenue",
-    contact: "+1-999-FASHION",
-    openingHours: "11:00 AM - 10:00 PM",
-  },
-  {
-    id: "5",
-    name: "Fitness Factory",
-    description: "Your one-stop shop for fitness gear.",
-    image: "https://via.placeholder.com/150",
-    details:
-      "Fitness Factory offers gym equipment, activewear, and supplements to meet all your fitness needs.",
-    recentPurchase: "Yoga Mat - Pro Series (1 hour ago)",
-    address: "88 Healthy Drive, Fit City",
-    mapLink: "https://goo.gl/maps/88healthydrive",
-    contact: "+1-333-FITNESS",
-    openingHours: "8:00 AM - 8:00 PM",
-  },
-  {
-    id: "6",
-    name: "Cuisine Corner",
-    description: "Authentic cuisine from around the world.",
-    image: "https://via.placeholder.com/150",
-    details:
-      "Cuisine Corner serves delicious dishes made with love and authenticity.",
-    recentPurchase: "Pasta Alfredo - Family Size (30 mins ago)",
-    address: "66 Gourmet Way, Foodsville",
-    mapLink: "https://goo.gl/maps/66gourmetway",
-    contact: "+1-777-CUISINE",
-    openingHours: "11:00 AM - 11:00 PM",
-  },
-];
+const generateMockData = () => {
+  const data = [];
+  for (let i = 0; i < 10; i++) {
+    data.push({
+      id: i.toString(),
+      name: faker.company.name(),
+      description: faker.commerce.productAdjective(),
+      image: faker.image.url(),
+      details: faker.lorem.sentences(2),
+      recentPurchase: faker.commerce.product(),
+      address: `${faker.location.buildingNumber()}, ${faker.location.street()}`,
+      mapLink: "https://maps.google.com",
+      contact: faker.phone.number(),
+      openingHours: `${faker.number.int({ min: 8, max: 12 })}:00 AM - ${faker.number.int(
+        {
+          min: 1,
+          max: 12,
+        },
+      )}:00 PM`,
+    });
+  }
+  return data;
+};
 
 const Info = () => {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedShop, setSelectedShop] = useState(null);
+  const [shopData, setShopData] = useState([]);
 
-  const openModal = (shop) => {
-    setSelectedShop(shop);
-    setModalVisible(true);
-  };
+  // Dropdown logic
+  const [isFocusCategory, setIsFocusCategory] = useState(false);
+  const [isFocusRegion, setIsFocusRegion] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedRegion, setSelectedRegion] = useState(null);
 
-  const closeModal = () => {
-    setModalVisible(false);
-    setSelectedShop(null);
-  };
+  const categoriesData = [
+    { label: "Electronics", value: "electronics" },
+    { label: "Fashion", value: "fashion" },
+    { label: "Sports", value: "sports" },
+    { label: "Books", value: "books" },
+  ];
+
+  const regionData = [
+    { label: "Silicon Valley", value: "silicon_valley" },
+    { label: "New York", value: "new_york" },
+    { label: "Los Angeles", value: "los_angeles" },
+    { label: "Chicago", value: "chicago" },
+  ];
+
+  useEffect(() => {
+    setShopData(generateMockData());
+  }, []);
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.card} onPress={() => openModal(item)}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => router.push("/info/InfoDetails")}
+    >
       <Image
         source={{ uri: item.image }}
         style={styles.image}
@@ -125,47 +83,54 @@ const Info = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+        {/* Dropdown for Categories */}
+        <Dropdown
+          style={[
+            styles.inputField,
+            isFocusCategory && { borderColor: colors.primary },
+          ]}
+          data={categoriesData}
+          labelField="label"
+          valueField="value"
+          placeholder={!isFocusCategory ? "Select Category" : "..."}
+          value={selectedCategory}
+          onFocus={() => setIsFocusCategory(true)}
+          onBlur={() => setIsFocusCategory(false)}
+          onChange={(item) => {
+            setSelectedCategory(item.value);
+            setIsFocusCategory(false);
+          }}
+        />
+
+        {/* Dropdown for Regions */}
+        <Dropdown
+          style={[
+            styles.inputField,
+            isFocusRegion && { borderColor: colors.primary },
+          ]}
+          data={regionData}
+          labelField="label"
+          valueField="value"
+          placeholder={!isFocusRegion ? "Select Region" : "..."}
+          value={selectedRegion}
+          onFocus={() => setIsFocusRegion(true)}
+          onBlur={() => setIsFocusRegion(false)}
+          onChange={(item) => {
+            setSelectedRegion(item.value);
+            setIsFocusRegion(false);
+          }}
+        />
+      </View>
+
       <FlatList
         style={{ marginTop: 10 }}
-        data={mockData}
+        data={shopData}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
       />
-      {selectedShop && (
-        <Modal visible={modalVisible} transparent animationType="fade">
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <ImageBackground
-                source={{ uri: selectedShop.image }}
-                style={styles.modalImage}
-                imageStyle={{ borderRadius: 15 }}
-              />
-              <Text style={styles.modalTitle}>{selectedShop.name}</Text>
-              <Text style={styles.modalDetails}>{selectedShop.details}</Text>
-
-              <Text style={styles.modalDetails}>
-                Address: {selectedShop.address}
-              </Text>
-              <Pressable onPress={() => Linking.openURL(selectedShop.mapLink)}>
-                <Text style={[styles.modalDetails, styles.link]}>
-                  View on Google Maps
-                </Text>
-              </Pressable>
-              <Text style={styles.modalDetails}>
-                Contact: {selectedShop.contact}
-              </Text>
-              <Text style={styles.modalDetails}>
-                Opening Hours: {selectedShop.openingHours}
-              </Text>
-              <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
-                <Text style={styles.closeButtonText}>Close</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-          {/* <StatusBar barStyle="dark-content" /> */}
-        </Modal>
-      )}
     </SafeAreaView>
   );
 };
@@ -175,15 +140,14 @@ export default Info;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
   },
   card: {
-    width: "90%",
+    width: "100%",
     marginBottom: 15,
     borderRadius: 10,
     overflow: "hidden",
     alignSelf: "center",
-    backgroundColor: "#fff",
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
     elevation: 3,
   },
   image: {
@@ -203,44 +167,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#ccc",
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 15,
-    width: "90%",
-    alignItems: "center",
-  },
-  modalImage: {
-    height: 200,
-    width: "100%",
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  modalDetails: {
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  link: {
-    color: "#3498db",
-    textDecorationLine: "underline",
-  },
-  closeButton: {
-    backgroundColor: "#e74c3c",
-    padding: 10,
+  inputField: {
+    marginTop: 10,
+    width: "48%",
+    borderWidth: 1,
+    borderColor: "#ccc",
     borderRadius: 5,
-    marginTop: 15,
-  },
-  closeButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
+    padding: 10,
+    marginBottom: 10,
   },
 });

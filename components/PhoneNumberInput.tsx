@@ -8,11 +8,14 @@ import {
 } from "react-native";
 import CountryPicker from "react-native-country-picker-modal";
 import { FontAwesome } from "@expo/vector-icons";
-import constStyles from "@/const/Styles";
-import { colors } from "@/const/colors";
+import PropTypes from "prop-types"; // For prop validation
+
+const colors = {
+  textPrimary: "#000", // Fallback color if not defined in constants
+};
 
 const PhoneNumberInput = ({
-  placeholder,
+  placeholder = "Enter phone number",
   value,
   onChangeText,
   style,
@@ -20,7 +23,6 @@ const PhoneNumberInput = ({
 }) => {
   const [countryCode, setCountryCode] = useState("IN");
   const [callingCode, setCallingCode] = useState("91");
-  const [isPickerVisible, setIsPickerVisible] = useState(false);
 
   const onSelect = (country) => {
     setCountryCode(country.cca2);
@@ -29,22 +31,15 @@ const PhoneNumberInput = ({
 
   return (
     <View style={[styles.inputContainer, style]}>
-      <TouchableOpacity
-        style={styles.countryPicker}
-        onPress={() => setIsPickerVisible(true)}
-      >
-        <CountryPicker
-          countryCode={countryCode}
-          withCallingCode
-          withFlag
-          withFilter
-          withAlphaFilter
-          onSelect={onSelect}
-          visible={isPickerVisible}
-          onClose={() => setIsPickerVisible(false)}
-        />
-        <Text style={styles.callingCode}>+{callingCode}</Text>
-      </TouchableOpacity>
+      <CountryPicker
+        countryCode={countryCode}
+        withCallingCode
+        withFlag
+        withFilter
+        withAlphaFilter
+        onSelect={onSelect}
+      />
+      <Text style={styles.callingCode}>+{callingCode}</Text>
       <TextInput
         {...props}
         value={value}
@@ -57,25 +52,33 @@ const PhoneNumberInput = ({
   );
 };
 
+PhoneNumberInput.propTypes = {
+  placeholder: PropTypes.string,
+  value: PropTypes.string,
+  onChangeText: PropTypes.func.isRequired,
+  style: PropTypes.object,
+};
+
 const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  countryPicker: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
   callingCode: {
     fontSize: 16,
-    marginLeft: 5,
+    marginLeft: 10,
     color: colors.textPrimary,
   },
   phoneInput: {
     flex: 1,
     fontSize: 16,
     color: colors.textPrimary,
+    padding: 5,
   },
 });
 

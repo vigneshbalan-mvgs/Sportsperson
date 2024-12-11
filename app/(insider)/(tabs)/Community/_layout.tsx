@@ -8,7 +8,6 @@ export default function HomeLayout() {
       <Stack.Screen name="createTeam" options={{ headerShown: false }} />
       <Stack.Screen name="editTeam" options={{ headerShown: false }} />
       <Stack.Screen name="createEvent" options={{ headerShown: false }} />
-      <Stack.Screen name="checkPlayers" options={{ headerShown: false }} />
       <Stack.Screen name="request" options={{ headerShown: false }} />
     </Stack>
   );

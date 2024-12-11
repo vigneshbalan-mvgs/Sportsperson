@@ -19,6 +19,7 @@ import {
 } from "@expo/vector-icons";
 import auth from "@react-native-firebase/auth";
 import Button from "@components/Button";
+import * as SecureStore from "expo-secure-store";
 
 const OverlayDrawer: React.FC = () => {
   const [menuVisible, setMenuVisible] = useState(false);
@@ -76,7 +77,9 @@ const OverlayDrawer: React.FC = () => {
         {
           text: "Yes",
           onPress: () => {
-            setTimeout(() => {
+            setTimeout(async () => {
+              await SecureStore.deleteItemAsync("isLoggedIn");
+              await SecureStore.deleteItemAsync("token");
               auth().signOut();
               router.replace("/login");
               setLoading(false);

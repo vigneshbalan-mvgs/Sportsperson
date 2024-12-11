@@ -14,6 +14,7 @@ import {
 import auth from "@react-native-firebase/auth";
 import { FirebaseError } from "firebase/app";
 import { router, Link } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 
 import {
   GoogleSignin,
@@ -28,13 +29,13 @@ import {
 } from "react-native-responsive-screen";
 
 import Input from "@components/Input";
+import { PORT } from "const/PORT";
 
 export default function Index() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // google-signin
   useEffect(() => {
     GoogleSignin.configure({
       webClientId:
@@ -42,55 +43,55 @@ export default function Index() {
     });
   }, []);
 
-  // Google sign-in function
   async function signInWithGoogle() {
-    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-
-    console.log("Environment:", __DEV__ ? "Development" : "Production");
-
     try {
       setLoading(true);
-
-      // Ensure device has Google Play services
       await GoogleSignin.hasPlayServices({
         showPlayServicesUpdateDialog: true,
       });
 
-      // Attempt to sign in
       const signInResult = await GoogleSignin.signIn();
-      console.log("Sign-In Result:", signInResult); // Full sign-in result
-
-      // Extract the ID token from sign-in result
-      const idToken = signInResult.data?.idToken;
+      const idToken = signInResult.idToken;
 
       if (!idToken) {
-        throw new Error("No ID token found in sign-in result.");
+        throw new Error("No ID token found.");
       }
 
-      // Create Google credential with the ID token
-      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+      // Fetch user's email from token
+      const userEmail = signInResult.user?.email;
 
-      // Sign in with the Google credential
-      await auth().signInWithCredential(googleCredential);
+      if (!userEmail) {
+        Alert.alert("Google Sign-In Error", "Could not fetch user email.");
+        setLoading(false);
+        return;
+      }
 
-      // Get more details of the signed-in user
-      const user = await GoogleSignin.getCurrentUser();
+      console.log("Attempting to fetch user data...");
+      const response = await fetch(`${PORT}/api/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: userEmail,
+        }),
+      });
 
-      console.log("User details:", user);
-      console.log("User name:", user?.user.name);
-      console.log("User email:", user?.user.email);
-      console.log("User photo:", user?.user.photo);
+      const result = await response.json();
 
-      const { name, email, photo } = user?.user || {};
-
-      // Once signed in, route the user to the Home page
-      router.replace("/(insider)/(tabs)/Home");
+      if (result.status) {
+        if (result.isNewUser) {
+          console.log("Redirecting to signup...");
+          router.replace("/NewUser");
+        } else {
+          console.log("Redirecting to home...");
+          router.replace("/Home");
+        }
+      } else {
+        Alert.alert("Error", result.message || "Something went wrong");
+      }
     } catch (error) {
-      console.error("Google Sign-In Error:", error);
-      Alert.alert(
-        "Sign-In Error",
-        error.message || "Failed to sign in with Google.",
-      );
+      Alert.alert("Sign-In Error", error.message || "Could not sign in.");
     } finally {
       setLoading(false);
     }
@@ -102,35 +103,41 @@ export default function Index() {
       return;
     }
 
-    setLoading(true);
     try {
-      await auth().signInWithEmailAndPassword(email, password);
+      setLoading(true);
+      console.log("button clicked");
 
-      const user = auth().currentUser;
-      if (user && user.emailVerified) {
-        // User is verified and can proceed to the home page
-        router.replace("/(insider)/(tabs)/Home");
+      const response = await fetch(`${PORT}/api/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          Email: email,
+          Password: password,
+        }),
+      });
+
+      const result = await response.json();
+      console.log(result);
+      if (result.status) {
+        await SecureStore.setItemAsync("isLoggedIn", JSON.stringify(true));
+        await SecureStore.setItemAsync("token", JSON.stringify(result.Token));
+
+        router.replace("/Home/");
       } else {
-        // If the user is not verified, send the verification link again
-        if (user) {
-          await user.sendEmailVerification();
-          alert(
-            "Please verify your email before logging in. A new verification link has been sent to your email.",
-          );
-        }
-        await auth().signOut(); // Log the user out if not verified
+        Alert.alert("Login Error", result.message);
       }
-    } catch (e: any) {
-      const err = e as FirebaseError;
-      console.log("Sign-in error: " + err.message);
-      Alert.alert("Sign-In Error", "Username or password is incorrect.");
+    } catch (error) {
+      Alert.alert("Error", error.message || "Unable to log in.");
     } finally {
       setLoading(false);
     }
   };
 
-  const signInWithMicrosoft = () => {};
-
+  const signInWithMicrosoft = async () => {
+    Alert.alert("Microsoft Sign-In", "Feature not yet implemented.");
+  };
   return (
     <View style={constStyles.container}>
       <KeyboardAvoidingView behavior="height">

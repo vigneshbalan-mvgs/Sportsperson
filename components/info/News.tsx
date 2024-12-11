@@ -1,246 +1,112 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  StyleSheet,
+  Text,
   View,
   Image,
-  Text,
-  StyleSheet,
-  Modal,
-  ImageBackground,
-  Pressable,
-  SafeAreaView,
+  ScrollView,
+  ActivityIndicator,
   TouchableOpacity,
-  Linking,
-  FlatList,
-  StatusBar,
 } from "react-native";
+import { useRouter } from "expo-router"; // Assuming you're using Expo Router
+import BackButton from "@components/back";
 
-const mockData = [
-  {
-    id: "1",
-    name: "Gadget Hub",
-    description: "The ultimate destination for tech lovers.",
-    image: "https://via.placeholder.com/150",
-    details:
-      "Gadget Hub offers the latest gadgets and tech accessories at unbeatable prices.",
-    recentPurchase: "Wireless Earbuds (20 mins ago)",
-    address: "123 Tech Street, Silicon Valley",
-    mapLink: "https://goo.gl/maps/123techstreet",
-    contact: "+1-800-TECHHUB",
-    openingHours: "9:00 AM - 9:00 PM",
-  },
-  {
-    id: "2",
-    name: "Daily Grocers",
-    description: "Fresh groceries and daily essentials.",
-    image: "https://via.placeholder.com/150",
-    details:
-      "Daily Grocers provides farm-fresh produce, dairy products, and household items.",
-    recentPurchase: "Fresh Apples (10 mins ago)",
-    address: "45 Market Road, Springfield",
-    mapLink: "https://goo.gl/maps/45marketroad",
-    contact: "+1-555-GROCERY",
-    openingHours: "7:00 AM - 10:00 PM",
-  },
-  {
-    id: "3",
-    name: "Book Haven",
-    description: "A paradise for book lovers.",
-    image: "https://via.placeholder.com/150",
-    details:
-      "Book Haven has a vast collection of books, from fiction to non-fiction and academic resources.",
-    recentPurchase: "The Alchemist by Paulo Coelho (5 mins ago)",
-    address: "78 Library Lane, Oxford",
-    mapLink: "https://goo.gl/maps/78librarylane",
-    contact: "+1-444-BOOKS",
-    openingHours: "10:00 AM - 8:00 PM",
-  },
-  {
-    id: "4",
-    name: "Fashion Fiesta",
-    description: "Trendy fashion at great prices.",
-    image: "https://via.placeholder.com/150",
-    details:
-      "Fashion Fiesta brings you the latest in men’s, women’s, and kids’ fashion.",
-    recentPurchase: "Men's Jacket - Winter Collection (2 hours ago)",
-    address: "22 Style Avenue, Beverly Hills",
-    mapLink: "https://goo.gl/maps/22styleavenue",
-    contact: "+1-999-FASHION",
-    openingHours: "11:00 AM - 10:00 PM",
-  },
-  {
-    id: "5",
-    name: "Fitness Factory",
-    description: "Your one-stop shop for fitness gear.",
-    image: "https://via.placeholder.com/150",
-    details:
-      "Fitness Factory offers gym equipment, activewear, and supplements to meet all your fitness needs.",
-    recentPurchase: "Yoga Mat - Pro Series (1 hour ago)",
-    address: "88 Healthy Drive, Fit City",
-    mapLink: "https://goo.gl/maps/88healthydrive",
-    contact: "+1-333-FITNESS",
-    openingHours: "8:00 AM - 8:00 PM",
-  },
-  {
-    id: "6",
-    name: "Cuisine Corner",
-    description: "Authentic cuisine from around the world.",
-    image: "https://via.placeholder.com/150",
-    details:
-      "Cuisine Corner serves delicious dishes made with love and authenticity.",
-    recentPurchase: "Pasta Alfredo - Family Size (30 mins ago)",
-    address: "66 Gourmet Way, Foodsville",
-    mapLink: "https://goo.gl/maps/66gourmetway",
-    contact: "+1-777-CUISINE",
-    openingHours: "11:00 AM - 11:00 PM",
-  },
-];
+const NewsDetail = () => {
+  const [newsData, setNewsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-const Info = () => {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedShop, setSelectedShop] = useState(null);
+  // Fetch news data using fetch()
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const response = await fetch(
+          "https://newsapi.org/v2/top-headlines?country=us&apiKey=fc4341690ec946098f0f49298c887dc2",
+        );
+        const data = await response.json();
+        setNewsData(data.articles);
+      } catch (error) {
+        console.error("Error fetching news: ", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const openModal = (shop) => {
-    setSelectedShop(shop);
-    setModalVisible(true);
+    fetchNews();
+  }, []);
+
+  // Handle navigation to news details screen
+  const handlePress = (newsItem) => {
+    router.push({
+      pathname: "/info/NewsDetail",
+      params: { data: JSON.stringify(newsItem) },
+    });
   };
-
-  const closeModal = () => {
-    setModalVisible(false);
-    setSelectedShop(null);
-  };
-
-  const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.card} onPress={() => openModal(item)}>
-      <Image
-        source={{ uri: item.image }}
-        style={styles.image}
-        imageStyle={{ borderRadius: 10 }}
-      />
-      <View style={styles.overlay}>
-        <Text style={styles.shopName}>{item.name}</Text>
-        <Text style={styles.description}>{item.description}</Text>
-      </View>
-    </TouchableOpacity>
-  );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <FlatList
-        style={{ marginTop: 10 }}
-        data={mockData}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-      />
-      {selectedShop && (
-        <Modal visible={modalVisible} transparent animationType="fade">
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <ImageBackground
-                source={{ uri: selectedShop.image }}
-                style={styles.modalImage}
-                imageStyle={{ borderRadius: 15 }}
-              />
-              <Text style={styles.modalTitle}>{selectedShop.name}</Text>
-              <Text style={styles.modalDetails}>{selectedShop.details}</Text>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Back Button */}
 
-              <Text style={styles.modalDetails}>
-                Address: {selectedShop.address}
+      {loading ? (
+        <ActivityIndicator style={styles.loader} size="large" color="#000" />
+      ) : (
+        newsData.map((item, index) => (
+          <TouchableOpacity
+            key={index}
+            style={styles.newsItem}
+            onPress={() => handlePress(item)}
+          >
+            <Image
+              source={{
+                uri: item.urlToImage || "https://via.placeholder.com/150",
+              }}
+              style={styles.image}
+            />
+            <View style={styles.textContainer}>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.bodyText}>
+                {item.description || "No description available"}
               </Text>
-              <Pressable onPress={() => Linking.openURL(selectedShop.mapLink)}>
-                <Text style={[styles.modalDetails, styles.link]}>
-                  View on Google Maps
-                </Text>
-              </Pressable>
-              <Text style={styles.modalDetails}>
-                Contact: {selectedShop.contact}
-              </Text>
-              <Text style={styles.modalDetails}>
-                Opening Hours: {selectedShop.openingHours}
-              </Text>
-              <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
-                <Text style={styles.closeButtonText}>Close</Text>
-              </TouchableOpacity>
             </View>
-          </View>
-          {/* <StatusBar barStyle="dark-content" /> */}
-        </Modal>
+          </TouchableOpacity>
+        ))
       )}
-    </SafeAreaView>
+    </ScrollView>
   );
 };
 
-export default Info;
+export default NewsDetail;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
-  card: {
-    width: "90%",
-    marginBottom: 15,
-    borderRadius: 10,
-    overflow: "hidden",
-    alignSelf: "center",
     backgroundColor: "#fff",
-    elevation: 3,
+  },
+  loader: {
+    marginTop: 20,
+  },
+  newsItem: {
+    marginBottom: 20,
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
   },
   image: {
-    height: 150,
-    justifyContent: "flex-end",
+    width: "100%",
+    height: 200,
+    resizeMode: "cover",
+    marginBottom: 10,
   },
-  overlay: {
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    padding: 10,
+  textContainer: {
+    padding: 5,
   },
-  shopName: {
+  title: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#fff",
   },
-  description: {
+  bodyText: {
     fontSize: 14,
-    color: "#ccc",
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 15,
-    width: "90%",
-    alignItems: "center",
-  },
-  modalImage: {
-    height: 200,
-    width: "100%",
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  modalDetails: {
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  link: {
-    color: "#3498db",
-    textDecorationLine: "underline",
-  },
-  closeButton: {
-    backgroundColor: "#e74c3c",
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 15,
-  },
-  closeButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
+    color: "#555",
+    lineHeight: 20,
   },
 });
