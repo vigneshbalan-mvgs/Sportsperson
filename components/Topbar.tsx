@@ -92,7 +92,12 @@ const Topbar = () => {
         </TouchableOpacity>
 
         {/* Search/Other Feature */}
-        <TouchableOpacity style={{ justifyContent: "center" }}>
+        <TouchableOpacity
+          style={{ justifyContent: "center" }}
+          onPress={() => {
+            router.push("/Search/");
+          }}
+        >
           <Image source={require("../assets/icons/binocular.png")} />
         </TouchableOpacity>
 

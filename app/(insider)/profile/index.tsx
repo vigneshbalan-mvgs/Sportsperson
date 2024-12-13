@@ -8,8 +8,8 @@ const index = () => {
   return (
     <View style={{ flex: 1 }}>
       <BackButton />
-      <Drawer />
       <ScrollView showsVerticalScrollIndicator={false}>
+        <Drawer />
         <Profile />
       </ScrollView>
     </View>

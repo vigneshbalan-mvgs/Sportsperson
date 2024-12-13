@@ -23,11 +23,13 @@ import auth from "@react-native-firebase/auth";
 import Sports from "./Sports";
 import constStyles from "@/const/Styles";
 import Button from "@components/Button";
+import Posts from "./PostGrid";
 
 const Profile = () => {
   const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false); // Loading state
+  const [posts, setPosts] = useState([]);
 
   function onAuthStateChanged(user) {
     setUser(user);
@@ -40,41 +42,8 @@ const Profile = () => {
   }, []);
 
   // Dummy Data for Posts and Events
-  const posts = [
-    "https://via.placeholder.com/150",
-    "https://via.placeholder.com/150",
-    "https://via.placeholder.com/150",
-    "https://via.placeholder.com/150",
-    "https://via.placeholder.com/150",
-    "https://via.placeholder.com/150",
-    "https://via.placeholder.com/150",
-    "https://via.placeholder.com/150",
-    "https://via.placeholder.com/150",
-    // Add more posts here
-  ];
-
-  const events = [
-    { name: "Event 1", date: "2024-12-01" },
-    { name: "Event 2", date: "2024-12-05" },
-    { name: "Event 3", date: "2024-12-10" },
-    { name: "Event 1", date: "2024-12-01" },
-    { name: "Event 1", date: "2024-12-01" },
-    // Add more events here
-  ];
 
   const [activeTab, setActiveTab] = useState("posts");
-
-  const renderPosts = () => (
-    <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-      {posts.map((item, index) => (
-        <TouchableOpacity style={styles.postItem} key={index}>
-          {/* Add unique key */}
-          <Image source={{ uri: item }} style={styles.postImage} />
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-
   return (
     <View style={styles.container}>
       {/* Cover Photo */}
@@ -82,13 +51,8 @@ const Profile = () => {
         source={{ uri: "https://via.placeholder.com/600x200" }}
         style={styles.coverImage}
       />
-
       <View style={{ justifyContent: "center", alignItems: "center" }}>
         <View style={styles.profilePictureWrapper}>
-          {/* <Image */}
-          {/*   source={{ uri: user?.photoURL }} */}
-          {/*   style={styles.profileImage} */}
-          {/* /> */}
           <View>
             <Image
               source={{ uri: "https://via.placeholder.com/150" }}
@@ -102,7 +66,6 @@ const Profile = () => {
           </Text>
         </View>
       </View>
-
       <Sports />
 
       <View
@@ -134,7 +97,6 @@ const Profile = () => {
           </TouchableOpacity>
         </View>
       </View>
-
       {/* Tab Navigation */}
       <View style={styles.tabs}>
         <TouchableOpacity
@@ -151,9 +113,8 @@ const Profile = () => {
           </Text>
         </TouchableOpacity>
       </View>
-
       {/* Content Display based on Active Tab */}
-      {renderPosts()}
+      <Posts posts={posts} />
     </View>
   );
 };

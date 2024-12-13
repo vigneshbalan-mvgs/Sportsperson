@@ -4,136 +4,75 @@ import {
   Text,
   View,
   Image,
-  FlatList,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import { colors, theme } from "../../const/colors";
-import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from "react-native-responsive-screen";
-import {
-  AntDesign,
-  FontAwesome,
-  FontAwesome6,
-  Ionicons,
-} from "@expo/vector-icons";
-import auth from "@react-native-firebase/auth";
+
+import { Ionicons } from "@expo/vector-icons";
 import Sports from "./Sports";
 import { router } from "expo-router";
+import Posts from "./PostGrid";
+import { PORT, fetchToken } from "../../const/PORT.js";
+import * as SecureStore from "expo-secure-store";
+import useFetchWithToken from "@/const/fetch";
 
 const Profile = () => {
-  const [initializing, setInitializing] = useState(true);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false); // Loading state
-
-  function onAuthStateChanged(user) {
-    setUser(user);
-    if (initializing) setInitializing(false);
-  }
-
-  useEffect(() => {
-    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
-    return subscriber;
-  }, []);
-
-  // Dummy Data for Posts
-  const posts = [
-    "https://via.placeholder.com/150",
-    "https://via.placeholder.com/150",
-    "https://via.placeholder.com/150",
-    "https://via.placeholder.com/150",
-    "https://via.placeholder.com/150",
-    "https://via.placeholder.com/150",
-    "https://via.placeholder.com/150",
-    "https://via.placeholder.com/150",
-    "https://via.placeholder.com/150",
-    // Add more posts here
-  ];
-
-  const [activeTab, setActiveTab] = useState("posts");
-
-  const renderPosts = () => (
-    <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-      {posts.map((item, index) => (
-        <TouchableOpacity style={styles.postItem} key={index}>
-          {/* Add unique key */}
-          <Image source={{ uri: item }} style={styles.postImage} />
-        </TouchableOpacity>
-      ))}
-    </View>
+  const [posts, setPosts] = useState([]);
+  const [userData, setUserData] = useState([]);
+  const { data, loading, error } = useFetchWithToken(
+    `${PORT}/api/user/profile`,
+    "GET",
   );
+  console.log(data, loading, error);
   return (
     <View style={styles.container}>
-      {/* Cover Photo */}
-      <Image
-        source={{ uri: "https://via.placeholder.com/600x200" }}
-        style={styles.coverImage}
-      />
+      <View>
+        <Image
+          source={{ uri: "https://via.placeholder.com/600x200" }}
+          style={styles.coverImage}
+        />
 
-      <View style={{ justifyContent: "center", alignItems: "center" }}>
         <View style={styles.profilePictureWrapper}>
-          {/* <Image */}
-          {/*   source={{ uri: user?.photoURL }} */}
-          {/*   style={styles.profileImage} */}
-          {/* /> */}
-          <View>
-            <Image
-              source={{ uri: "https://via.placeholder.com/150" }}
-              style={styles.profileImage}
-            />
-          </View>
-          <Text style={styles.username}>{user?.displayName}</Text>
+          <Image
+            source={{ uri: "https://via.placeholder.com/150" }}
+            style={styles.profileImage}
+          />
+          <Text style={styles.username}> Username</Text>
           <Text style={styles.username}>
             <Ionicons name="location" size={20} color={colors.text} />
             Location
           </Text>
         </View>
-      </View>
 
-      <Sports />
+        <Sports />
 
-      <View style={styles.userInfoSection}>
-        <View style={styles.statsRow}>
-          <TouchableOpacity
-            style={styles.statItem}
-            onPress={() => {
-              router.push("/(insider)/profile/Stats");
-            }}
-          >
-            <Text style={styles.statValue}>120</Text>
-            <Text style={styles.statLabel}>Cheerer</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.statItem}
-            onPress={() => {
-              router.push("/(insider)/profile/Stats");
-            }}
-          >
-            <Text style={styles.statValue}>500</Text>
-            <Text style={styles.statLabel}>Cheering</Text>
-          </TouchableOpacity>
+        <View style={styles.userInfoSection}>
+          <View style={styles.statsRow}>
+            <TouchableOpacity
+              style={styles.statItem}
+              onPress={() => router.push("/(insider)/profile/Stats")}
+            >
+              <Text style={styles.statValue}>120</Text>
+              <Text style={styles.statLabel}>Cheerer</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.statItem}
+              onPress={() => router.push("/(insider)/profile/Stats")}
+            >
+              <Text style={styles.statValue}>500</Text>
+              <Text style={styles.statLabel}>Cheering</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-
       {/* Tab Navigation */}
       <View style={styles.tabs}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === "posts" && styles.activeTab]}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "posts" && styles.activeTabText,
-            ]}
-          >
-            Posts
-          </Text>
+        <TouchableOpacity style={styles.activeTab}>
+          <Text>Posts</Text>
         </TouchableOpacity>
       </View>
-      {renderPosts()}
-
-      {/* Content Display based on Active Tab */}
+      <Posts posts={posts} />
     </View>
   );
 };
@@ -142,6 +81,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+    flexDirection: "column",
   },
   coverImage: {
     width: "100%",
@@ -230,33 +170,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     marginTop: theme.spacing.md,
   },
-  tab: {
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-  },
   activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: theme.colors.primary,
-  },
-  tabText: {
-    fontSize: theme.fontSizes.md,
     color: theme.colors.primary,
-  },
-  activeTabText: {
-    color: theme.colors.primaryDark,
-  },
-  postsGrid: {
-    flex: 1,
-  },
-  postItem: {
-    width: wp("33.3%"),
-    padding: 5,
-  },
-  postImage: {
-    width: "100%",
-    height: wp("33.3%"),
-    borderRadius: 10,
-    resizeMode: "cover",
   },
 });
 

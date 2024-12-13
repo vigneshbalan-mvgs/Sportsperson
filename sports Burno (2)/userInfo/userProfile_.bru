@@ -5,11 +5,11 @@ meta {
 }
 
 get {
-  url: {{Port}}/api/user/profile
-  body: multipartForm
+  url: http://{{Port}}/api/user/profile
+  body: json
   auth: bearer
 }
 
 auth:bearer {
-  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NTgwNDI0ZmY2ZjNiN2ZjYTcwMTBlOCIsInV1aWQiOiJLbHA3ZC1vU2RiTlBFVmNuaEdtNFMiLCJFbWFpbF9JRCI6InZpZ25lc2hiYWxhbm12Z3MyMDAzQGdtYWlsLmNvbSIsImlhdCI6MTczMzgyNjIwMiwiZXhwIjoxNzMzOTEyNjAyfQ.DQ7zJTjfqrW57-_WQbUT22sNvdin-7xcCY0MyBdgXQE
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NTgwNDI0ZmY2ZjNiN2ZjYTcwMTBlOCIsInV1aWQiOiJLbHA3ZC1vU2RiTlBFVmNuaEdtNFMiLCJFbWFpbF9JRCI6InZpZ25lc2hiYWxhbm12Z3MyMDAzQGdtYWlsLmNvbSIsImlhdCI6MTczNDAwMjMyMSwiZXhwIjoxNzM0MDg4NzIxfQ._R9bV9G5_BweQodCEqL_7c7CRq0-7d7jaHiy3oDbk_o
 }
