@@ -1,0 +1,21 @@
+meta {
+  name: deletecomment
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{Port}}/api/user/comment/675d69bdffbd09519316a5f9
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: 
+}
+
+body:json {
+  {       
+    "commentId": "67580b3acc3479f2a406c0b4"
+  }
+}

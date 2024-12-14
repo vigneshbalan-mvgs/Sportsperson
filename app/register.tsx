@@ -5,7 +5,6 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   TextInput,
-  Button,
   ActivityIndicator,
   Image,
   TouchableOpacity,
@@ -13,13 +12,10 @@ import {
 } from "react-native";
 import { TextInput as RNTextInput } from "react-native-paper";
 import { Link, router } from "expo-router";
-import auth from "@react-native-firebase/auth";
-import { FirebaseError } from "firebase/app";
 
 // Importing styles
 import constStyles from "../const/Styles";
 import { colors, spacing, fontSizes, br, bw } from "../const/colors";
-import BackButton from "@components/back";
 import ButtonComponant from "@components/Button";
 import Input from "@/components/Input";
 
@@ -65,6 +61,7 @@ export default function Register() {
           Password: password,
           firstName: firstname,
           lastName: lastname,
+          Phone_Number: phoneNumber,
         }),
       });
       console.log(response);
@@ -77,9 +74,10 @@ export default function Register() {
       console.log(data);
 
       if (data.status) {
+        console.log(data.verification);
         router.push({
           pathname: "/otpverfication",
-          params: { data: data.token, otp: data.Verification },
+          params: { data: data.data, otp: data.Verification },
         });
       } else {
         alert(data.message);

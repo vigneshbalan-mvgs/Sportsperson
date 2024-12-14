@@ -21,20 +21,18 @@ export default function OtpVerification() {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Function to handle OTP verification
   const handleVerify = async (code) => {
     if (code === otp) {
-      // Make the API request to verify the OTP
       try {
         setLoading(true);
-        const url = "http://147.79.68.157:4500/api/auth/verify";
+        const url = "https://147.79.68.157:4500/api/auth/verify";
         const options = {
           method: "POST",
           headers: {
-            authorization: `Bearer ${data}`, // Use the Bearer token from route.params
+            authorization: `Bearer ${token}`,
             "content-type": "application/json",
           },
-          body: JSON.stringify({ code }),
+          body: JSON.stringify({ code: otp }),
         };
 
         const response = await fetch(url, options);

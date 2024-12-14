@@ -1,0 +1,15 @@
+meta {
+  name: View_Post
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{Port}}/api/user/view
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWQzNzgzM2NlMWIwMDkxNzVmYjk4YyIsInV1aWQiOiJyOThNQUJFd01Dcmt6N1AxZ1NDYkUiLCJFbWFpbF9JRCI6Imd1ZXN0dXNlcjNAZ21haWwuY29tIiwiaWF0IjoxNzM0MTYyMzExLCJleHAiOjE3MzQyNDg3MTF9.X4wBPeIssUY7vVTDQXAaiHg5MdwW3S3OUCQHm8FCtGQ
+}

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   StyleSheet,
   View,
@@ -6,7 +6,6 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
-
 import Post from "@/components/Posts/Post";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
@@ -14,68 +13,107 @@ import {
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
 import { colors } from "@/const/colors";
-
-const staticData = Array.from({ length: 50 }, (_, index) => ({
-  id: index + 1,
-  postType: "post",
-  userId: index + 1,
-  title: `Post Title ${index + 1}`,
-  profileImage: require("../../assets/images/contnet.jpg"),
-  postDescription: `postDescription ${index + 1} `,
-  userName: `User ${index + 1}`,
-  likes: Math.floor(Math.random() * 1000),
-  location: `Location ${index + 1}`,
-  imageUrl: require("../../assets/images/content1.jpg"),
-}));
-
-const shuffleArray = (array) => {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-};
+import * as SecureStore from "expo-secure-store";
+import { router } from "expo-router";
 
 const PostMain = () => {
-  const POSTS_PER_PAGE = 2;
-  const [posts, setPosts] = useState(
-    shuffleArray(staticData).slice(0, POSTS_PER_PAGE),
-  );
-
+  const [posts, setPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const [usedIds, setUsedIds] = useState(new Set(posts.map((post) => post.id))); // Track used IDs
+  const [usedIds, setUsedIds] = useState(new Set());
+  const [token, setToken] = useState(null); // Initializing as null
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => {
-      const shuffledPosts = shuffleArray(staticData).slice(0, POSTS_PER_PAGE);
-      setPosts(shuffledPosts);
-      setUsedIds(new Set(shuffledPosts.map((post) => post.id))); // Reset used IDs
-      setRefreshing(false);
-    }, 1000);
+  // Fetch token from SecureStore and set it in state
+  useEffect(() => {
+    const getToken = async () => {
+      const storedToken = await SecureStore.getItemAsync("token");
+      setToken(storedToken); // Update token state
+    };
+
+    getToken();
   }, []);
 
-  const loadMorePosts = () => {
-    if (!isFetchingMore && posts.length < staticData.length) {
-      setIsFetchingMore(true);
-      setTimeout(() => {
-        const remainingPosts = staticData.filter(
-          (post) => !usedIds.has(post.id),
-        );
-        const newPosts = shuffleArray(remainingPosts).slice(0, POSTS_PER_PAGE);
-        setPosts((prevPosts) => [...prevPosts, ...newPosts]);
-        // Update usedIds state correctly by adding new IDs
-        setUsedIds((prevUsedIds) => {
-          const newIds = new Set(prevUsedIds);
-          newPosts.forEach((post) => newIds.add(post.id));
-          return newIds;
-        });
-        setIsFetchingMore(false);
-      }, 750);
+  // Check if token is available, if not redirect to login
+  useEffect(() => {
+    if (token === null) return; // Only run this if token is not null
+
+    if (!token) {
+      router.replace("/login"); // Navigate to login if token is not available
+    }
+  }, [token]); // Only trigger this effect when token is updated
+
+  const fetchPosts = async () => {
+    if (!token) return; // Ensure token is loaded before fetching data
+    console.log("token", token);
+
+    try {
+      const url = "http://147.79.68.157:4500/api/user/view";
+      const options = {
+        method: "GET",
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+        },
+      };
+
+      const response = await fetch(url, options);
+      const data = await response.json();
+      console.log(data);
+      if (data.status) {
+        setPosts(data.posts);
+        setUsedIds(new Set(data.posts.map((post) => post.postId)));
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
+
+  // Handle pull-to-refresh
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    // Reset state to start fresh
+    setPosts([]);
+    setUsedIds(new Set());
+    setIsFetchingMore(false);
+    fetchPosts().finally(() => setRefreshing(false));
+  }, [token]);
+
+  const loadMorePosts = async () => {
+    if (!isFetchingMore) {
+      setIsFetchingMore(true);
+      try {
+        const url = `http://147.79.68.157:4500/api/user/view`;
+        const response = await fetch(url, {
+          headers: {
+            authorization: `Bearer ${token}`,
+            "content-type": "application/json",
+          },
+        });
+        const data = await response.json();
+        if (data.status) {
+          setPosts(data.posts);
+          setUsedIds(
+            (prevUsedIds) =>
+              new Set([
+                ...prevUsedIds,
+                ...data.posts.map((post) => post.postId),
+              ]),
+          );
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsFetchingMore(false);
+      }
+    }
+  };
+
+  // Fetch posts after the token is set
+  useEffect(() => {
+    if (token) {
+      fetchPosts();
+    }
+  }, [token]);
 
   const renderPost = ({ item }) => (
     <GestureHandlerRootView>
@@ -85,14 +123,18 @@ const PostMain = () => {
 
   const renderFooter = () => {
     if (!isFetchingMore) return null;
-    return <ActivityIndicator size="large" color="#0000ff" />;
+    return (
+      <View style={{ height: 200 }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
   };
 
   return (
     <View style={styles.container}>
       <FlatList
         data={posts}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.postId}
         renderItem={renderPost}
         onEndReached={loadMorePosts}
         onEndReachedThreshold={0.1}

@@ -1,0 +1,22 @@
+meta {
+  name: searchAlgorithm
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{Port}}/api/user/trail
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWM1ZGY3MWQ0YWE5MmFhNjZlOGU5NiIsInV1aWQiOiJWbXpJc2xfSkdwWGNrbHotdm5sekIiLCJFbWFpbF9JRCI6InZpZ25lc2hiYWxhbm12Z3MyMDAzQGdtYWlsLmNvbSIsImlhdCI6MTczNDEwNjY0MSwiZXhwIjoxNzM0MTkzMDQxfQ.6jp-Z6NfXOrZqTvdS1pBvD1Av3IZXW4s_dLh69reHt4
+}
+
+body:json {
+  {
+    "searchQuery": "",
+    "type": "post"
+  }
+}

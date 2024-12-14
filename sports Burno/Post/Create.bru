@@ -1,0 +1,30 @@
+meta {
+  name: Create
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{Port}}/api/user/post
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWQzNzgzM2NlMWIwMDkxNzVmYjk4YyIsInV1aWQiOiJyOThNQUJFd01Dcmt6N1AxZ1NDYkUiLCJFbWFpbF9JRCI6Imd1ZXN0dXNlcjNAZ21haWwuY29tIiwiaWF0IjoxNzM0MTYyMzExLCJleHAiOjE3MzQyNDg3MTF9.X4wBPeIssUY7vVTDQXAaiHg5MdwW3S3OUCQHm8FCtGQ
+}
+
+body:json {
+  {
+      "PostImage_URL":"https://placehold.co/300x300/pink/orange?text=Post+Image+1" ,
+      "Location":"Madurai",
+      "description": "This is My Second Description"
+  }
+}
+
+body:multipart-form {
+  location: Ooty
+  description: Hello 2
+  URL: @file(/home/mvgs/Pictures/Wal/anime-girl-6096x4042-10022.jpg)
+  type: image
+}

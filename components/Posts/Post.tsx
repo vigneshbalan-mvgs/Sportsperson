@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  TouchableWithoutFeedback,
   Animated,
   Modal,
 } from "react-native";
@@ -14,9 +13,7 @@ import {
 import SkeletonPlaceholder from "react-native-skeleton-placeholder";
 import { router } from "expo-router";
 import {
-  AntDesign,
   FontAwesome,
-  FontAwesome6,
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
@@ -26,20 +23,21 @@ import {
 } from "react-native-responsive-screen";
 import { br, colors } from "@/const/colors";
 import constStyles from "@/const/Styles";
-import TextInput from "@components/TextInput";
-import Button from "@components/Button";
+import CommentSectionOverlay from "./Comments";
 
-// Refactor Post to use default parameters
 const Post = ({ post = {} }) => {
   const {
-    profileImage = require("../../assets/images/content1.jpg"),
-    userName = "Anonymous",
-    location = "Unknown",
-    imageUrl = "https://via.placeholder.com/400",
-    postDescription = "No description provided",
-    likes = 0,
+    postId = post._id || "123",
+    profileImage = { uri: "https://via.placeholder.com/150" }, // Use URI properly
+    userName = post.userName || "Anonymous",
+    location = post.location || "No location provided",
+    imageUrl = { uri: post.URL[0] || "https://via.placeholder.com/400" }, // Fallback to first image
+    postDescription = post.description || "No description provided",
+    likes = post.likes?.length || 0, // Add optional chaining for safety
+    comments = post.comments || [],
   } = post;
 
+  console.log(post);
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
   const [doubleTapCount, setDoubleTapCount] = useState(0);
@@ -48,63 +46,49 @@ const Post = ({ post = {} }) => {
 
   const [isCommentOverlayVisible, setCommentOverlayVisible] = useState(false);
 
-  //fetch
-
+  // Simulate loading time
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 1500); // Simulating loading time
+    }, 1500);
     return () => clearTimeout(timer);
   }, []);
-
-  //Onpress events
 
   const handleLike = () => {
     setLiked(!liked);
   };
+
   const doubleTap = () => {
     setDoubleTapCount((prevCount) => {
       const newCount = prevCount + 1;
-
       if (newCount === 2) {
-        // Handle double-tap logic
         handleLike();
-        triggerAnimation(); // Show the animation
-        clearTimeout(timer); // Clear the timer if double-tap is detected
-        return 0; // Reset the count
+        triggerAnimation();
+        clearTimeout(timer);
+        return 0;
       }
-
-      // Set a timer for resetting the count after 500ms (or your preferred timeout)
       const newTimer = setTimeout(() => {
-        setDoubleTapCount(0); // Reset count if the second tap doesn't happen in time
-      }, 500); // 500ms time window for double tap
-
-      setTimer(newTimer); // Save the timer reference
-
+        setDoubleTapCount(0);
+      }, 500);
+      setTimer(newTimer);
       return newCount;
     });
   };
 
-  //animation
-
   const triggerAnimation = () => {
-    console.log("passed");
-    // Reset opacity to 1, then fade out
     Animated.sequence([
       Animated.timing(animationOpacity, {
         toValue: 1,
-        duration: 200, // Fade-in duration
+        duration: 200,
         useNativeDriver: true,
       }),
       Animated.timing(animationOpacity, {
         toValue: 0,
-        duration: 800, // Fade-out duration
+        duration: 800,
         useNativeDriver: true,
       }),
     ]).start();
   };
-
-  //not available
 
   if (!post) {
     return <Text>No content available</Text>;
@@ -206,14 +190,20 @@ const Post = ({ post = {} }) => {
                 />
               </TouchableOpacity>
             </View>
-            <Text style={styles.subtitle}>
-              something about the post that realted to that something about the
-              post that realted to that something about the post that realted to
-              the post that realted to that {postDescription}
+            <Text style={styles.subtitle} numberOfLines={2}>
+              {postDescription}
             </Text>
           </View>
         </View>
       )}
+
+      {/* Comment Section Overlay */}
+      <CommentSectionOverlay
+        isVisible={isCommentOverlayVisible}
+        onClose={() => setCommentOverlayVisible(false)}
+        data={comments}
+        postId={postId}
+      />
     </View>
   );
 };
@@ -306,69 +296,3 @@ const styles = StyleSheet.create({
 });
 
 export default Post;
-
-const CommentSectionOverlay = ({ isVisible, onClose }) => {
-  return (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={isVisible}
-      onRequestClose={onClose}
-    >
-      <View style={overlayStyles.overlayContainer}>
-        <View style={overlayStyles.overlayContent}>
-          <Text style={overlayStyles.title}>Comments</Text>
-          <ScrollView>
-            {/* Render existing comments here */}
-            <Text style={overlayStyles.comment}>User1: Great post!</Text>
-            <Text style={overlayStyles.comment}>User2: Amazing picture!</Text>
-          </ScrollView>
-          <TextInput
-            style={overlayStyles.input}
-            placeholder="Write a comment..."
-          />
-          <Button
-            title="Post Comment"
-            onPress={() => console.log("Comment posted")}
-          />
-          <Button title="Close" onPress={onClose} />
-        </View>
-      </View>
-    </Modal>
-  );
-};
-
-const overlayStyles = StyleSheet.create({
-  overlayContainer: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  overlayContent: {
-    width: "90%",
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 20,
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  comment: {
-    marginVertical: 5,
-    fontSize: 14,
-  },
-  input: {
-    width: "100%",
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 5,
-    padding: 10,
-    marginVertical: 10,
-  },
-});

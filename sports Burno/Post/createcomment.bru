@@ -1,0 +1,21 @@
+meta {
+  name: createcomment
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{Port}}/api/user/comment/675d02f11d4aa92aa66e8f64
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWM1ZGY3MWQ0YWE5MmFhNjZlOGU5NiIsInV1aWQiOiJWbXpJc2xfSkdwWGNrbHotdm5sekIiLCJFbWFpbF9JRCI6InZpZ25lc2hiYWxhbm12Z3MyMDAzQGdtYWlsLmNvbSIsImlhdCI6MTczNDEwNjY0MSwiZXhwIjoxNzM0MTkzMDQxfQ.6jp-Z6NfXOrZqTvdS1pBvD1Av3IZXW4s_dLh69reHt4
+}
+
+body:json {
+  {       
+    "comment": "First Comment"
+  }
+}

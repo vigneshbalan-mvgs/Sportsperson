@@ -1,0 +1,19 @@
+meta {
+  name: adminDelete
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{Port}}/api/auth/admin/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "userId": [
+        "675d37833ce1b009175fb98c"
+    ]
+  }
+}
