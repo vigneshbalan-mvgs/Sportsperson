@@ -16,6 +16,7 @@ const useFetchWithToken = (url, method = "GET", body = null) => {
         // this is how you should use token
         const sanitizedToken = await SecureStore.getItemAsync("token");
         const token = sanitizedToken?.replace(/^"|"$/g, ""); // Removes leading and trailing quotes
+        console.log("changes")
 
         if (!token) {
           router.replace("/")
