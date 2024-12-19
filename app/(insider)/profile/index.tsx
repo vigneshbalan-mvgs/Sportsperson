@@ -1,4 +1,4 @@
-import { View, Text, ScrollView } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import React from "react";
 import Profile from "@components/Profile/Profile";
 import BackButton from "@components/back";
@@ -8,8 +8,8 @@ const index = () => {
   return (
     <View style={{ flex: 1 }}>
       <BackButton />
+      <Drawer />
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Drawer />
         <Profile />
       </ScrollView>
     </View>

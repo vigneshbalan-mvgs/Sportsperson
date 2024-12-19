@@ -64,8 +64,8 @@ const Button: React.FC<ButtonProps> = ({
           size="small"
           color={
             type === "secondary" ||
-            type === "secondaryHalf" ||
-            type === "secondaryAuto"
+              type === "secondaryHalf" ||
+              type === "secondaryAuto"
               ? colors.primary
               : colors.textWhite
           }
@@ -77,7 +77,7 @@ const Button: React.FC<ButtonProps> = ({
             (type === "secondary" ||
               type === "secondaryHalf" ||
               type === "secondaryAuto") &&
-              styles.secondaryButtonText,
+            styles.secondaryButtonText,
           ]}
         >
           {title}

@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Image,
   TouchableOpacity,
+  Alert,
   ScrollView,
 } from "react-native";
 import { TextInput as RNTextInput } from "react-native-paper";
@@ -67,7 +68,12 @@ export default function Register() {
       console.log(response);
 
       if (!response.ok) {
+        Alert.alert(
+          "Error",
+          `HTTP error! Status: ${response.status} ${response.statusText}`,
+        );
         throw new Error(`HTTP error! Status: ${response.status}`);
+        return;
       }
 
       const data = await response.json();

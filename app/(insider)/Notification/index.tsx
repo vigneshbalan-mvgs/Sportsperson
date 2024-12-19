@@ -6,11 +6,13 @@ import {
   FlatList,
   TouchableOpacity,
 } from "react-native";
-import AntDesign from "react-native-vector-icons/AntDesign";
+import { AntDesign } from "@expo/vector-icons";
 import { faker } from "@faker-js/faker";
 import { useRouter } from "expo-router";
 import constStyles from "@/const/Styles";
 import BackButton from "@components/back";
+import useFetchWithToken from "@/const/fetch";
+import { PORT } from "@/const/PORT";
 
 const routes = [
   "/(insider)/profile",
@@ -24,6 +26,11 @@ const NotificationScreen = () => {
   const [notifications, setNotifications] = useState([]);
   const [clickedId, setClickedId] = useState(null); // Track clicked notification ID
   const router = useRouter();
+  const { data, loading, error } = useFetchWithToken(
+    `${PORT}/api/auth/notification`,
+    "GET",
+  );
+  console.log(data, loading, error);
 
   useEffect(() => {
     // Generate random notifications with routes

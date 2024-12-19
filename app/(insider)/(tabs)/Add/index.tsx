@@ -23,6 +23,7 @@ export default function App() {
   const [hasPermission, setHasPermission] = useState(false);
   const [photo, setPhoto] = useState(null);
   const [taken, setTaken] = useState(false);
+  const [fileType, setFileType] = useState<string>("");
 
   // Request permissions for camera and media library
   useEffect(() => {
@@ -64,6 +65,7 @@ export default function App() {
 
       await MediaLibrary.saveToLibraryAsync(newPhoto.uri);
       setPhoto(newPhoto.uri);
+      setFileType("image"); // Set file type to image
       setTaken(true);
     }
   };
@@ -80,21 +82,25 @@ export default function App() {
 
     console.log("Launching image picker...");
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaTypeOptions.All, // Allow both images and videos
       allowsEditing: false,
       quality: 1,
     });
-    setTaken(true);
-    setPhoto(result.assets[0].uri);
+    console.log(result);
+
+    if (!result.canceled) {
+      setTaken(true);
+      setPhoto(result.assets[0].uri);
+
+      // Check if the selected asset is an image or video based on MIME type
+      if (result.assets[0].type === "photo") {
+        setFileType("image");
+      } else if (result.assets[0].type === "video") {
+        setFileType("video");
+      }
+    }
 
     console.log("Image picker result:", result);
-
-    if (!result.canceled && result.assets && result.assets[0].uri) {
-      console.log("Selected image URI:", result.assets[0].uri);
-      setSelectedImage(result.assets[0].uri);
-    } else {
-      console.log("No image selected or operation canceled.");
-    }
   };
 
   return (
@@ -102,7 +108,7 @@ export default function App() {
       {taken ? (
         <Modal style={{ flex: 1, flexDirection: "column" }}>
           <RightIcon icon="close" onPress={() => setTaken(false)} />
-          <PostScreen uri={photo} />
+          <PostScreen uri={photo} type={fileType} />
         </Modal>
       ) : (
         <>
@@ -151,3 +157,4 @@ const styles = StyleSheet.create({
     padding: 20,
   },
 });
+

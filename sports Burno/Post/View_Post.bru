@@ -5,11 +5,16 @@ meta {
 }
 
 get {
-  url: {{Port}}/api/user/view
+  url: {{Port}}/api/user/home?page=1&limit=3
   body: json
   auth: bearer
 }
 
+params:query {
+  page: 1
+  limit: 3
+}
+
 auth:bearer {
-  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWQzNzgzM2NlMWIwMDkxNzVmYjk4YyIsInV1aWQiOiJyOThNQUJFd01Dcmt6N1AxZ1NDYkUiLCJFbWFpbF9JRCI6Imd1ZXN0dXNlcjNAZ21haWwuY29tIiwiaWF0IjoxNzM0MTYyMzExLCJleHAiOjE3MzQyNDg3MTF9.X4wBPeIssUY7vVTDQXAaiHg5MdwW3S3OUCQHm8FCtGQ
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWM1ZGY3MWQ0YWE5MmFhNjZlOGU5NiIsInV1aWQiOiJWbXpJc2xfSkdwWGNrbHotdm5sekIiLCJFbWFpbF9JRCI6InZpZ25lc2hiYWxhbm12Z3MyMDAzQGdtYWlsLmNvbSIsImlhdCI6MTczNDMzNTM5NCwiZXhwIjoxNzM0NDIxNzk0fQ.mkW1bt1GK-ruQoMzLPcuOnSfRHKY8j19Y4Vww-1uRtM
 }

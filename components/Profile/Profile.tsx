@@ -1,30 +1,53 @@
-import React, { useState, useEffect } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-} from "react-native";
+import React, { useEffect, useState } from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { colors, theme } from "../../const/colors";
 
 import { Ionicons } from "@expo/vector-icons";
 import Sports from "./Sports";
 import { router } from "expo-router";
 import Posts from "./PostGrid";
-import { PORT, fetchToken } from "../../const/PORT.js";
-import * as SecureStore from "expo-secure-store";
+import { PORT } from "../../const/PORT.js";
 import useFetchWithToken from "@/const/fetch";
 
 const Profile = () => {
-  const [posts, setPosts] = useState([]);
-  const [userData, setUserData] = useState([]);
   const { data, loading, error } = useFetchWithToken(
-    `${PORT}/api/user/profile`,
+    `${PORT}/api/user/myprofile`,
     "GET",
   );
   console.log(data, loading, error);
+
+  if (loading) {
+    console.log("Loading...");
+    return null; // or a loading spinner component
+  }
+
+  if (error) {
+    console.error("Error:", error);
+    return null; // or an error message component
+  }
+
+  const user = data?.info || {};
+  console.log(user);
+
+  const SportsInfo = user.sportsInfo || [];
+
+  // Followers and Following Counts
+  const followers = user.followersCount || 0;
+  const following = user.followingCount || 0;
+
+  // Posts
+  const posts = user.myPostKeys || [];
+
+  // Display Data
+  console.log({
+    user,
+    SportsInfo,
+    followers,
+    following,
+    posts,
+  });
+
+
   return (
     <View style={styles.container}>
       <View>
@@ -35,17 +58,23 @@ const Profile = () => {
 
         <View style={styles.profilePictureWrapper}>
           <Image
-            source={{ uri: "https://via.placeholder.com/150" }}
+            source={{ uri: 'https://via.placeholder.com/200' }}
             style={styles.profileImage}
           />
-          <Text style={styles.username}> Username</Text>
+          <Text style={styles.username}>{user.userName}</Text>
           <Text style={styles.username}>
-            <Ionicons name="location" size={20} color={colors.text} />
-            Location
+            {user.location && (
+              <>
+                <Ionicons name="location" size={20} color={colors.text} />
+                <Text>{user.location}</Text>
+              </>
+            )}
+
           </Text>
         </View>
 
-        <Sports />
+        <Sports data={SportsInfo} />
+
 
         <View style={styles.userInfoSection}>
           <View style={styles.statsRow}>
@@ -53,14 +82,14 @@ const Profile = () => {
               style={styles.statItem}
               onPress={() => router.push("/(insider)/profile/Stats")}
             >
-              <Text style={styles.statValue}>120</Text>
+              <Text style={styles.statValue}>{followers}</Text>
               <Text style={styles.statLabel}>Cheerer</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.statItem}
               onPress={() => router.push("/(insider)/profile/Stats")}
             >
-              <Text style={styles.statValue}>500</Text>
+              <Text style={styles.statValue}>{following}</Text>
               <Text style={styles.statLabel}>Cheering</Text>
             </TouchableOpacity>
           </View>
@@ -72,7 +101,7 @@ const Profile = () => {
           <Text>Posts</Text>
         </TouchableOpacity>
       </View>
-      <Posts posts={posts} />
+      <Posts post={posts} />
     </View>
   );
 };

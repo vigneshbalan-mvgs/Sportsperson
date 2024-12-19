@@ -12,39 +12,41 @@ import * as ImagePicker from "expo-image-picker";
 import { AntDesign } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
-import BackButton from "@components/back";
-import RightIcon from "@components/RightIcon";
+import { Video } from "expo-av"; // Video component from expo-av
+import { PORT } from "@/const/PORT";
 
-const PostScreen = ({ uri }) => {
-  const [selectedImage, setSelectedImage] = useState(uri);
+const PostScreen = ({ uri, type }) => {
+  const [selectedMedia, setSelectedMedia] = useState(uri);
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
-  const [type, setType] = useState("image");
+  const [mediaType, setMediaType] = useState(type); // To handle media type dynamically
+  console.log(uri, type);
 
-  const pickImage = async () => {
+  const pickMedia = async () => {
     console.log("Requesting media library permissions...");
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     console.log("Permission status:", status);
 
     if (status !== "granted") {
-      alert("Sorry, we need camera roll permissions to make this work!");
+      alert("Sorry, we need media library permissions to make this work!");
       return;
     }
 
-    console.log("Launching image picker...");
+    console.log("Launching media picker...");
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsEditing: false,
       quality: 1,
     });
 
-    console.log("Image picker result:", result);
+    console.log("Media picker result:", result);
 
     if (!result.canceled && result.assets && result.assets[0].uri) {
-      console.log("Selected image URI:", result.assets[0].uri);
-      setSelectedImage(result.assets[0].uri);
+      console.log("Selected media URI:", result.assets[0].uri);
+      setSelectedMedia(result.assets[0].uri);
+      setMediaType(result.assets[0].type); // Set type as either 'image' or 'video'
     } else {
-      console.log("No image selected or operation canceled.");
+      console.log("No media selected or operation canceled.");
     }
   };
 
@@ -54,31 +56,31 @@ const PostScreen = ({ uri }) => {
       return;
     }
 
+    const mediaUri = selectedMedia; // URI from media picker
+    const filename = mediaUri.split("/").pop(); // Extract filename
+
     // Create FormData object
     const form = new FormData();
     form.append("location", location);
     form.append("description", description);
-    form.append("type", type);
+    form.append("type", mediaType);
 
-    if (selectedImage) {
-      const imageUri = selectedImage; // URI from ImagePicker
-      const filename = imageUri.split("/").pop(); // Extract filename
-      const filetype = `image/${filename.split(".").pop()}`; // Determine MIME type
+    // Ensure media is handled correctly based on type (image/video)
+    form.append("URL", {
+      uri: mediaUri,
+      name: filename,
+      type: mediaType === "image" ? "image/jpeg" : "video/mp4", // Adjust based on media type
+    });
 
-      form.append("URL", { uri: imageUri, name: filename, type: filetype });
-    }
+    const url = `${PORT}/api/user/post`;
 
-    const url = "http://147.79.68.157:4500/api/user/post";
-    const token = await SecureStore.getItemAsync("token");
-    console.log("Token:", token);
-    const token1 =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWM1ZGY3MWQ0YWE5MmFhNjZlOGU5NiIsInV1aWQiOiJWbXpJc2xfSkdwWGNrbHotdm5sekIiLCJFbWFpbF9JRCI6InZpZ25lc2hiYWxhbm12Z3MyMDAzQGdtYWlsLmNvbSIsImlhdCI6MTczNDEwNjY0MSwiZXhwIjoxNzM0MTkzMDQxfQ.6jp-Z6NfXOrZqTvdS1pBvD1Av3IZXW4s_dLh69reHt4";
+    const sanitizedToken = await SecureStore.getItemAsync("token");
+    const token = sanitizedToken?.replace(/^"|"$/g, ""); // Removes leading and trailing quotes
 
     const options = {
       method: "POST",
       headers: {
-        "Content-Type": "multipart/form-data",
-        authorization: `Bearer ${token1}`,
+        authorization: `Bearer ${token}`,
       },
       body: form,
     };
@@ -89,7 +91,7 @@ const PostScreen = ({ uri }) => {
       console.log("Post response:", data);
 
       if (data.status) {
-        alert("Post Created Successfully: " + JSON.stringify(data));
+        alert("Post Created Successfully");
         router.replace("/");
       } else {
         alert("Error creating post: " + JSON.stringify(data));
@@ -99,32 +101,55 @@ const PostScreen = ({ uri }) => {
       alert("Error creating post: " + error.message);
     }
   };
+
   return (
     <View style={styles.container}>
       {/* Add Media Section */}
       <View style={styles.addMediaSection}>
-        {!selectedImage && (
+        {!selectedMedia && (
           <>
             <Text style={styles.label}>Add Media</Text>
-            <TouchableOpacity style={styles.iconButton} onPress={pickImage}>
-              <Text>🖼️</Text>
+            <TouchableOpacity style={styles.iconButton} onPress={pickMedia}>
+              <Text>📸</Text>
             </TouchableOpacity>
           </>
         )}
-        {selectedImage && (
+        {selectedMedia && mediaType === "image" && (
           <View style={styles.selectedImageContainer}>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => {
                 console.log("Removing selected image.");
-                setSelectedImage("");
+                setSelectedMedia("");
+                setMediaType("image");
               }}
             >
               <AntDesign name="close" size={24} color="black" />
             </TouchableOpacity>
             <Image
-              source={{ uri: selectedImage }}
+              source={{ uri: selectedMedia }}
               style={styles.selectedImage}
+            />
+          </View>
+        )}
+
+        {selectedMedia && mediaType === "video" && (
+          <View style={styles.selectedMediaContainer}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => {
+                console.log("Removing selected video.");
+                setSelectedMedia("");
+                setMediaType("image");
+              }}
+            >
+              <AntDesign name="close" size={24} color="black" />
+            </TouchableOpacity>
+            <Video
+              source={{ uri: selectedMedia }}
+              style={styles.selectedVideo}
+              useNativeControls
+              isLooping
             />
           </View>
         )}
@@ -177,21 +202,6 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     opacity: 0.4,
   },
-  profileSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 10,
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
   label: {
     fontSize: 14,
     marginBottom: 5,
@@ -217,11 +227,28 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  selectedImageContainer: {
+    width: "100%",
+    height: "100%",
+    position: "relative",
+    resizeMode: "cover",
+    alignItems: "center",
+    justifyContent: 'center',
+  },
   selectedImage: {
     width: "100%",
-    height: 300,
+    height: "100%",
     borderRadius: 10,
-    marginTop: 10,
+  },
+  selectedMediaContainer: {
+    width: "100%",
+    height: 300,
+    position: "relative",
+  },
+  selectedVideo: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 10,
   },
   postButton: {
     backgroundColor: "red",
@@ -235,3 +262,4 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
+

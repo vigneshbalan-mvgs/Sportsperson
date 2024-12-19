@@ -12,6 +12,7 @@ import { router } from "expo-router";
 import BackButton from "@components/back";
 import { colors, fontSizes, spacing, br, bw } from "../const/colors";
 import constStyles from "../const/Styles";
+import { PORT } from "@/const/PORT";
 
 export default function OtpVerification() {
   const route = useRoute();
@@ -27,7 +28,7 @@ export default function OtpVerification() {
       // Make the API request to verify the OTP
       try {
         setLoading(true);
-        const url = "http://147.79.68.157:4500/api/auth/verify";
+        const url = `${PORT}/api/auth/verify`;
         const options = {
           method: "POST",
           headers: {

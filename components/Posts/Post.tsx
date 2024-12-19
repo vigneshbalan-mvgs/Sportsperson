@@ -3,16 +3,15 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   Image,
   Animated,
-  Modal,
 } from "react-native";
 
 import SkeletonPlaceholder from "react-native-skeleton-placeholder";
 import { router } from "expo-router";
 import {
+  AntDesign,
   FontAwesome,
   Ionicons,
   MaterialCommunityIcons,
@@ -25,25 +24,25 @@ import { br, colors } from "@/const/colors";
 import constStyles from "@/const/Styles";
 import CommentSectionOverlay from "./Comments";
 
-const Post = ({ post = {} }) => {
+const Post = ({ post }) => {
   const {
-    postId = post._id || "123",
-    profileImage = { uri: "https://via.placeholder.com/150" }, // Use URI properly
+    postId = post.postId || "123",
+    profileImage = post.userProfile || "https://via.placeholder.com/150",
     userName = post.userName || "Anonymous",
     location = post.location || "No location provided",
-    imageUrl = { uri: post.URL[0] || "https://via.placeholder.com/400" }, // Fallback to first image
+    imageUrl = { uri: post.URL[0] || "https://via.placeholder.com/400" },
     postDescription = post.description || "No description provided",
-    likes = post.likes?.length || 0, // Add optional chaining for safety
+    type = post.type,
+    likes = post.likes?.length || 0,
     comments = post.comments || [],
   } = post;
 
-  console.log(post);
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
   const [doubleTapCount, setDoubleTapCount] = useState(0);
   const [timer, setTimer] = useState(null);
-  const animationOpacity = useRef(new Animated.Value(0)).current;
-
+  const animationOpacity = useRef(new Animated.Value(0)).current;  // Heart animation opacity
+  const scaleValue = useRef(new Animated.Value(0)).current; // Heart scale animation
   const [isCommentOverlayVisible, setCommentOverlayVisible] = useState(false);
 
   // Simulate loading time
@@ -90,6 +89,8 @@ const Post = ({ post = {} }) => {
     ]).start();
   };
 
+
+
   if (!post) {
     return <Text>No content available</Text>;
   }
@@ -119,7 +120,7 @@ const Post = ({ post = {} }) => {
           <View style={styles.header}>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <TouchableOpacity>
-                <Image source={profileImage} style={styles.profile} />
+                <Image source={{ uri: profileImage }} style={styles.profile} />
               </TouchableOpacity>
               <View style={styles.headerTextWrapper}>
                 <TouchableOpacity
@@ -155,6 +156,23 @@ const Post = ({ post = {} }) => {
               style={styles.imageContent}
               resizeMode="cover"
             />
+            <Animated.View
+              style={[
+                styles.likeAnimation,
+                { opacity: animationOpacity },
+              ]}
+            >
+              {/* <Image */}
+              {/*   style={{ resizeMode: "contain", width: 60, height: 60, }} */}
+              {/*   source={ */}
+              {/*     liked */}
+              {/*       ? require("../../assets/icons/success-1.png") */}
+              {/*       : require("../../assets/icons/success.png") */}
+              {/*   } */}
+              {/* /> */}
+              <AntDesign name="heart" size={50} color={colors.primary} />
+            </Animated.View>
+
           </TouchableOpacity>
           <View>
             <View style={styles.socialIcons}>
@@ -194,6 +212,8 @@ const Post = ({ post = {} }) => {
               {postDescription}
             </Text>
           </View>
+
+          {/* Animated Heart Icon */}
         </View>
       )}
 
@@ -258,6 +278,13 @@ const styles = StyleSheet.create({
   content: {
     alignItems: "center",
   },
+  likeAnimation: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: [{ translateX: -32 }, { translateY: -32 }],
+  },
+
   socialIcons: {
     flexDirection: "row",
     alignItems: "center",
@@ -293,6 +320,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#e0e0e0",
     marginBottom: 10,
   },
+  heartIcon: {
+    position: "absolute",
+    top: "35%",
+    left: "35%",
+    zIndex: 1,
+  },
 });
 
 export default Post;
+

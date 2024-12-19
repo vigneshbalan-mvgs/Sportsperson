@@ -16,9 +16,20 @@ import { AntDesign } from "@expo/vector-icons";
 import { colors } from "@/const/colors";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker"; // Importing ImagePicker
+import { PORT } from "@/const/PORT";
+import useFetchWithToken from "@/const/fetch";
 
 const PersonalDetails = () => {
   const router = useRouter();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [Phone_Number, setPhone_Number] = useState("");
+  const [dob, setDob] = useState("");
+  const [gender, setGender] = useState("");
+  const [work, setWork] = useState("");
+  const [club, setClub] = useState("");
+
   const [schools, setSchools] = useState([""]);
   const [colleges, setColleges] = useState([""]);
   const [profileImage, setProfileImage] = useState(
@@ -41,7 +52,7 @@ const PersonalDetails = () => {
     setColleges([...colleges, ""]);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validation to ensure all required fields are filled
     const allFieldsValid =
       schools.every((school) => school.trim() !== "") &&
@@ -53,11 +64,54 @@ const PersonalDetails = () => {
       return;
     }
 
-    // Save action (you can add your logic here)
-    console.log("Data saved");
+    // Prepare FormData to send to the API
+    const formData = new FormData();
+    formData.append("Nickname", nickname);
+    formData.append("Phone_Number", Phone_Number);
+    formData.append("Date_of_Birth", dob);
+    formData.append("Gender", gender);
+    formData.append("Work", work);
+    formData.append("Club", club);
 
-    // Navigate back after saving
-    router.back();
+    schools.forEach((school, index) => {
+      formData.append(`Education[school][${index}]`, school);
+    });
+
+    colleges.forEach((college, index) => {
+      formData.append(`Education[college][${index}]`, college);
+    });
+
+    // Handle profile image
+    const localUri = profileImage;
+    const filename = localUri.split("/").pop();
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? `image/${match[1]}` : `image`;
+    const fileToUpload = {
+      uri: localUri,
+      name: filename,
+      type,
+    };
+    formData.append("Profile_ImgURL", fileToUpload);
+
+    try {
+      const { data, loading, error } = useFetchWithToken(
+        `${PORT}/api/user/profile_save`,
+        "POST",
+        formData,
+      );
+      console.log(data, loading, error);
+
+      console.log(data); // Handle response data
+      if (data.success) {
+        alert("Profile updated successfully!");
+        router.back(); // Navigate back
+      } else {
+        alert("Failed to update profile.");
+      }
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      alert("An error occurred while saving the profile. Please try again.");
+    }
   };
 
   const pickImage = async () => {
@@ -150,16 +204,23 @@ const PersonalDetails = () => {
 
         {/* Name */}
         <Text style={constStyles.labelText}>Name</Text>
-        <TextInputComponent placeholder="Name" />
+        <TextInputComponent placeholder="Name" onChangeText={setFirstName} />
 
         {/* Nickname */}
         <Text style={constStyles.labelText}>Nick Name</Text>
-        <TextInputComponent placeholder="Display Name" />
+        <TextInputComponent
+          placeholder="Display Name"
+          onChangeText={setNickname}
+        />
 
         {/* Phone Number */}
         <Text style={constStyles.labelText}>Phone Number</Text>
         <View>
-          <TextInputComponent style={styles.flex} placeholder="Phone Number" />
+          <TextInputComponent
+            style={styles.flex}
+            placeholder="Phone Number"
+            onChangeText={setPhoneNumber}
+          />
           <TouchableOpacity style={styles.verifyButton}>
             <AntDesign name="check" size={24} color={colors.primary} />
           </TouchableOpacity>
@@ -256,16 +317,16 @@ const styles = StyleSheet.create({
     width: 150,
     height: 150,
     borderRadius: 75,
-    alignSelf: "center",
+    marginBottom: 10,
   },
   editButton: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    alignSelf: "center",
-    alignItems: "center",
-    justifyContent: "center",
     position: "absolute",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    bottom: 10,
+    right: 0,
+    padding: 5,
+    backgroundColor: "#fff",
+    borderRadius: 30,
+    borderWidth: 2,
+    borderColor: "#ccc",
   },
 });

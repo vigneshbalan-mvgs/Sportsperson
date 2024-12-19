@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  KeyboardAvoidingView,
-  TextInput,
-  Image,
-  TouchableOpacity,
-  ScrollView,
   Alert,
+  Image,
+  KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import auth from "@react-native-firebase/auth";
 import { FirebaseError } from "firebase/app";
-import { router, Link } from "expo-router";
+import { Link, router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 
 import {
@@ -22,10 +22,10 @@ import {
 } from "@react-native-google-signin/google-signin";
 
 import constStyles from "../const/Styles";
-import { colors, fontSizes, spacing, br, bw } from "../const/colors";
+import { br, bw, colors, fontSizes, spacing } from "../const/colors";
 import {
-  widthPercentageToDP as wp,
   heightPercentageToDP as hp,
+  widthPercentageToDP as wp,
 } from "react-native-responsive-screen";
 
 import Input from "@components/Input";
@@ -50,39 +50,50 @@ export default function Index() {
         showPlayServicesUpdateDialog: true,
       });
 
+      console.log("Attempting to sign in with Google...");
       const signInResult = await GoogleSignin.signIn();
+      console.log("Sign in result:", signInResult);
+
       const idToken = signInResult.idToken;
+      console.log("Fetched ID token:", idToken);
 
       if (!idToken) {
         throw new Error("No ID token found.");
       }
 
-      // Fetch user's email from token
-      const userEmail = signInResult.user?.email;
+      // Extracting additional user data
+      const { email, givenName, familyName, photo } = signInResult.user;
+      console.log("User Info:", { email, givenName, familyName, photo });
 
-      if (!userEmail) {
-        Alert.alert("Google Sign-In Error", "Could not fetch user email.");
+      if (!email || !givenName || !familyName) {
+        Alert.alert("Google Sign-In Error", "Could not fetch user details.");
         setLoading(false);
         return;
       }
 
       console.log("Attempting to fetch user data...");
-      const response = await fetch(`${PORT}/api/auth/login`, {
+
+      // Send all user details to the backend API
+      const response = await fetch(`${PORT}/api/auth/google`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: userEmail,
+          email,
+          firstName: givenName,
+          lastName: familyName,
+          profilePicture: photo, // Sending profile picture URL if you want
         }),
       });
+      console.log("Token:", token);
 
       const result = await response.json();
 
       if (result.status) {
         if (result.isNewUser) {
           console.log("Redirecting to signup...");
-          router.replace("/NewUser");
+          router.replace("/(insider)/(tabs)");
         } else {
           console.log("Redirecting to home...");
           router.replace("/Home");
@@ -91,6 +102,7 @@ export default function Index() {
         Alert.alert("Error", result.message || "Something went wrong");
       }
     } catch (error) {
+      console.error(error); // Log the error to understand the issue
       Alert.alert("Sign-In Error", error.message || "Could not sign in.");
     } finally {
       setLoading(false);

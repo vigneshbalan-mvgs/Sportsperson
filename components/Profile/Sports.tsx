@@ -15,54 +15,14 @@ import {
 import { theme, colors } from "../../const/colors";
 import { AntDesign } from "@expo/vector-icons";
 
-const Sports = () => {
+const Sports = ({ data }) => {
   const screenWidth = Dimensions.get("window").width; // Get screen width
   const radius = screenWidth / 3; // Set the radius dynamically based on screen width
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  const data = [
-    {
-      id: 1,
-      name: "Cricket",
-      bestAt: "Bowler",
-      NoOfMatches: 50,
-      NoOfYears: 2,
-      image: "https://via.placeholder.com/150",
-    },
-    {
-      id: 2,
-      name: "Football",
-      bestAt: "Striker",
-      NoOfMatches: 120,
-      NoOfYears: 5,
-      image: "https://via.placeholder.com/150",
-    },
-    {
-      id: 3,
-      name: "Tennis",
-      bestAt: "Singles",
-      NoOfMatches: 30,
-      NoOfYears: 3,
-      image: "https://via.placeholder.com/150",
-    },
-    {
-      id: 4,
-      name: "Basketball",
-      bestAt: "Point Guard",
-      NoOfMatches: 75,
-      NoOfYears: 4,
-      image: "https://via.placeholder.com/150",
-    },
-    {
-      id: 5,
-      name: "Hockey",
-      bestAt: "Forward",
-      NoOfMatches: 60,
-      NoOfYears: 3,
-      image: "https://via.placeholder.com/150",
-    },
-  ];
+  // Check if data is defined and is an array
+  const sportsInfo = Array.isArray(data) ? data : [];
 
   const openModal = (item) => {
     if (!item) return;
@@ -72,33 +32,37 @@ const Sports = () => {
 
   return (
     <View style={styles.sportscontainer}>
-      {data.map((item, index) => {
-        const angle = (Math.PI / (data.length - 1)) * index; // Divide the semi-circle into equal parts
-        const x = radius * Math.cos(angle); // X-coordinate
-        const y = radius * Math.sin(angle); // Y-coordinate (negative for inverted semi-circle)
+      {sportsInfo.length > 0 ? (
+        sportsInfo.map((item, index) => {
+          const angle = (Math.PI / (sportsInfo.length - 1)) * index; // Divide the semi-circle into equal parts
+          const x = radius * Math.cos(angle); // X-coordinate
+          const y = radius * Math.sin(angle); // Y-coordinate (negative for inverted semi-circle)
 
-        return (
-          <TouchableOpacity
-            key={item.id}
-            style={[
-              styles.sportsimage1,
-              {
-                position: "absolute",
-                left: screenWidth / 2 + x - wp(9), // Center the image horizontally
-                top: y - wp(9), // Adjust for the radius and align vertically
-              },
-            ]}
-            onPress={() => openModal(item)}
-          >
-            <Image
-              source={{ uri: item.image }}
-              style={styles.sportsimage}
-              resizeMode="cover"
-            />
-            <Text style={styles.sportstext}>{item.name}</Text>
-          </TouchableOpacity>
-        );
-      })}
+          return (
+            <TouchableOpacity
+              key={item._id}
+              style={[
+                styles.sportsimage1,
+                {
+                  position: "absolute",
+                  left: screenWidth / 2 + x - wp(9), // Center the image horizontally
+                  top: y - wp(9), // Adjust for the radius and align vertically
+                },
+              ]}
+              onPress={() => openModal(item)}
+            >
+              <Image
+                source={{ uri: item.sp }}
+                style={styles.sportsimage}
+                resizeMode="cover"
+              />
+              <Text style={styles.sportstext}>{item.sName}</Text>
+            </TouchableOpacity>
+          );
+        })
+      ) : (
+        <Text>No sports data available</Text>
+      )}
 
       <Modal
         visible={modalVisible}
@@ -117,7 +81,9 @@ const Sports = () => {
             <View style={{ width: "100%", height: "60%" }}>
               <Image
                 source={{
-                  uri: selectedItem?.image || "https://via.placeholder.com/150",
+                  uri:
+                    selectedItem?.sp ||
+                    "https://via.placeholder.com/150",
                 }}
                 style={styles.modalImage}
                 resizeMode="cover"
@@ -129,7 +95,7 @@ const Sports = () => {
                   alignSelf: "center",
                 }}
               >
-                {selectedItem?.name || "No Item"}
+                {selectedItem?.sName || "No Item"}
               </Text>
             </View>
             <View
@@ -140,17 +106,17 @@ const Sports = () => {
                 gap: 20,
               }}
             >
-              <View style={{}}>
+              <View>
                 <Text style={styles.detailText}>Best At:</Text>
-                <Text style={styles.detailText}>Number of Matches:</Text>
-                <Text style={styles.detailText}>Number of Years:</Text>
+                <Text style={styles.detailText}>Year Playing:</Text>
+                <Text style={styles.detailText}>Matches Played:</Text>
               </View>
-              <View style={{}}>
-                <Text style={styles.detailText}>{selectedItem?.bestAt}</Text>
+              <View>
+                <Text style={styles.detailText}>{selectedItem?.best}</Text>
                 <Text style={styles.detailText}>
-                  {selectedItem?.NoOfMatches}
+                  {selectedItem?.year}
                 </Text>
-                <Text style={styles.detailText}>{selectedItem?.NoOfYears}</Text>
+                <Text style={styles.detailText}>{selectedItem?.matches}</Text>
               </View>
             </View>
           </View>
@@ -200,18 +166,12 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
   modalImage: {
     width: "100%",
     height: "100%",
     borderRadius: 10,
     marginBottom: 10,
   },
-
   detailText: {
     fontSize: wp(4),
     color: "#07001f",
