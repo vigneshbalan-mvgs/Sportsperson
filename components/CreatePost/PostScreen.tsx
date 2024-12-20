@@ -14,6 +14,7 @@ import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
 import { Video } from "expo-av"; // Video component from expo-av
 import { PORT } from "@/const/PORT";
+import { ScrollView } from "react-native-gesture-handler";
 
 const PostScreen = ({ uri, type }) => {
   const [selectedMedia, setSelectedMedia] = useState(uri);
@@ -104,83 +105,85 @@ const PostScreen = ({ uri, type }) => {
 
   return (
     <View style={styles.container}>
-      {/* Add Media Section */}
-      <View style={styles.addMediaSection}>
-        {!selectedMedia && (
-          <>
-            <Text style={styles.label}>Add Media</Text>
-            <TouchableOpacity style={styles.iconButton} onPress={pickMedia}>
-              <Text>📸</Text>
-            </TouchableOpacity>
-          </>
-        )}
-        {selectedMedia && mediaType === "image" && (
-          <View style={styles.selectedImageContainer}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => {
-                console.log("Removing selected image.");
-                setSelectedMedia("");
-                setMediaType("image");
-              }}
-            >
-              <AntDesign name="close" size={24} color="black" />
-            </TouchableOpacity>
-            <Image
-              source={{ uri: selectedMedia }}
-              style={styles.selectedImage}
-            />
-          </View>
-        )}
+      <ScrollView>
+        {/* Add Media Section */}
+        <View style={styles.addMediaSection}>
+          {!selectedMedia && (
+            <>
+              <Text style={styles.label}>Add Media</Text>
+              <TouchableOpacity style={styles.iconButton} onPress={pickMedia}>
+                <Text>📸</Text>
+              </TouchableOpacity>
+            </>
+          )}
+          {selectedMedia && mediaType === "image" && (
+            <View style={styles.selectedImageContainer}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => {
+                  console.log("Removing selected image.");
+                  setSelectedMedia("");
+                  setMediaType("image");
+                }}
+              >
+                <AntDesign name="close" size={24} color="black" />
+              </TouchableOpacity>
+              <Image
+                source={{ uri: selectedMedia }}
+                style={styles.selectedImage}
+              />
+            </View>
+          )}
 
-        {selectedMedia && mediaType === "video" && (
-          <View style={styles.selectedMediaContainer}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => {
-                console.log("Removing selected video.");
-                setSelectedMedia("");
-                setMediaType("image");
-              }}
-            >
-              <AntDesign name="close" size={24} color="black" />
-            </TouchableOpacity>
-            <Video
-              source={{ uri: selectedMedia }}
-              style={styles.selectedVideo}
-              useNativeControls
-              isLooping
-            />
-          </View>
-        )}
-      </View>
+          {selectedMedia && mediaType === "video" && (
+            <View style={styles.selectedMediaContainer}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => {
+                  console.log("Removing selected video.");
+                  setSelectedMedia("");
+                  setMediaType("image");
+                }}
+              >
+                <AntDesign name="close" size={24} color="black" />
+              </TouchableOpacity>
+              <Video
+                source={{ uri: selectedMedia }}
+                style={styles.selectedVideo}
+                useNativeControls
+                isLooping
+              />
+            </View>
+          )}
+        </View>
 
-      {/* Location Input */}
-      <TextInput
-        style={styles.textEditor}
-        placeholder="Enter location..."
-        value={location}
-        onChangeText={(text) => {
-          setLocation(text);
-        }}
-      />
+        {/* Location Input */}
+        <TextInput
+          style={styles.textEditor}
+          placeholder="Enter location..."
+          value={location}
+          onChangeText={(text) => {
+            setLocation(text);
+          }}
+        />
 
-      {/* Description Input */}
-      <TextInput
-        style={styles.textEditor}
-        multiline
-        placeholder="Write your thoughts..."
-        textAlignVertical="top"
-        value={description}
-        onChangeText={(text) => {
-          setDescription(text);
-        }}
-      />
+        {/* Description Input */}
+        <TextInput
+          style={styles.textEditor}
+          multiline
+          placeholder="Write your thoughts..."
+          textAlignVertical="top"
+          value={description}
+          onChangeText={(text) => {
+            setDescription(text);
+          }}
+        />
 
-      {/* Post Button */}
-      <TouchableOpacity style={styles.postButton} onPress={handlePost}>
-        <Text style={styles.postButtonText}>Post</Text>
-      </TouchableOpacity>
+        {/* Post Button */}
+        <TouchableOpacity style={styles.postButton} onPress={handlePost}>
+          <Text style={styles.postButtonText}>Post</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </View>
   );
 };

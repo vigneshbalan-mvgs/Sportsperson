@@ -74,6 +74,7 @@ const PostMain = () => {
         },
       });
 
+
       if (!response.ok) {
         throw new Error("Failed to fetch posts");
       }
@@ -94,7 +95,7 @@ const PostMain = () => {
 
         // Update page state
         if (reset) {
-          setPage(2); // Set to the next page after reset
+          setPage(1); // Set to the next page after reset
         } else {
           setPage((prevPage) => prevPage + 1);
         }

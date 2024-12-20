@@ -40,7 +40,6 @@ const useFetchWithToken = (url, method = "GET", body = null) => {
         ) {
           options.body = JSON.stringify(body);
         }
-
         const response = await fetch(url, options);
 
         if (!response.ok) {

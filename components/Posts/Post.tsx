@@ -23,6 +23,7 @@ import {
 import { br, colors } from "@/const/colors";
 import constStyles from "@/const/Styles";
 import CommentSectionOverlay from "./Comments";
+import uselikeAPI from "@/hooks/Post/like.js"
 
 const Post = ({ post }) => {
   const {
@@ -30,10 +31,10 @@ const Post = ({ post }) => {
     profileImage = post.userProfile || "https://via.placeholder.com/150",
     userName = post.userName || "Anonymous",
     location = post.location || "No location provided",
-    imageUrl = { uri: post.URL[0] || "https://via.placeholder.com/400" },
+    imageUrl = { uri: post.URL || "https://via.placeholder.com/400" },
     postDescription = post.description || "No description provided",
     type = post.type,
-    likes = post.likes?.length || 0,
+    likes = post.lc || 0,
     comments = post.comments || [],
   } = post;
 
@@ -55,6 +56,8 @@ const Post = ({ post }) => {
 
   const handleLike = () => {
     setLiked(!liked);
+    uselikeAPI({ postId });
+
   };
 
   const doubleTap = () => {
@@ -179,6 +182,7 @@ const Post = ({ post }) => {
               <TouchableOpacity
                 onPress={handleLike}
                 style={{ flexDirection: "row", gap: 5 }}
+
               >
                 <Image
                   source={

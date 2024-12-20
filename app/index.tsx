@@ -5,9 +5,9 @@ import auth from "@react-native-firebase/auth";
 import * as SecureStore from "expo-secure-store";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Progress from "react-native-progress";
-import { PORT, fetchToken } from "const/PORT";
+import { PORT, fetchToken } from "@/const/PORT";
 
-import { colors } from "../const/colors";
+import { colors } from "@/const/colors";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 
 async function getSecureStoreItem(key: any) {
@@ -42,7 +42,6 @@ export default function SplashScreen() {
       }, progressSpeed);
     }, delayTime);
   };
-
   useFocusEffect(
     React.useCallback(() => {
       console.log("Component focused");
@@ -60,7 +59,6 @@ export default function SplashScreen() {
 
   useEffect(() => {
     console.log(PORT);
-    fetchToken();
   }, []); // Logs only once when component mounts
 
   useEffect(() => {
