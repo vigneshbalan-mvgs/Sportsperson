@@ -165,6 +165,7 @@ const Options = ({ isVisible, onClose, postId, postUserUuid }) => {
                   <RNButton
                     title="Cancel"
                     onPress={() => setReporting(false)} // Go back to the options screen
+
                   />
                 </>
               ) : (
