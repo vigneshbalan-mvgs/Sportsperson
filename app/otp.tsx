@@ -12,24 +12,29 @@ import { router } from "expo-router";
 import BackButton from "@components/back";
 import { colors, fontSizes, spacing, br, bw } from "../const/colors";
 import constStyles from "../const/Styles";
+import { PORT } from "../const/PORT"
 
 export default function OtpVerification() {
   const route = useRoute();
-  const { data, otp } = route.params; // Access the OTP, bearer token, and email
-  console.log("Verifying OTP:", otp, data); // Log the received OTP and token
-  const token = data;
-  const [code, setCode] = useState("");
+  const { data, otp, token } = route.params; // Access the OTP, bearer token, and email
+  console.log("Verifying OTP:", otp, data, token); // Log the received OTP and token
+  const [code, setCode] = useState(otp);
   const [loading, setLoading] = useState(false);
+  console.log("OTP entered:", code);
+  const token1 = token?.replace(/^"|"$/g, "");
+  console.log("Token is:", token1);
+
 
   const handleVerify = async (code) => {
+    console.log("OTP entered:", code);
     if (code === otp) {
       try {
         setLoading(true);
-        const url = "https://147.79.68.157:4500/api/auth/verify";
+        const url = `  ${PORT}/api/auth/verify`;
         const options = {
           method: "POST",
           headers: {
-            authorization: `Bearer ${token}`,
+            authorization: `Bearer ${token1}`,
             "content-type": "application/json",
           },
           body: JSON.stringify({ code: otp }),

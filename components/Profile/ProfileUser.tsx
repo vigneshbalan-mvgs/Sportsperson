@@ -1,120 +1,114 @@
-import React, { useState, useEffect } from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  Image,
-  FlatList,
-  TouchableOpacity,
-  ScrollView,
-} from "react-native";
+import React, { useEffect, useState } from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { colors, theme } from "../../const/colors";
-import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from "react-native-responsive-screen";
-import {
-  AntDesign,
-  FontAwesome,
-  FontAwesome6,
-  Ionicons,
-} from "@expo/vector-icons";
-import auth from "@react-native-firebase/auth";
+
+import { Ionicons } from "@expo/vector-icons";
 import Sports from "./Sports";
-import constStyles from "@/const/Styles";
-import Button from "@components/Button";
+import { router } from "expo-router";
 import Posts from "./PostGrid";
+import { PORT } from "../../const/PORT.js";
+import useFetchWithToken from "@/const/fetch";
 
-const Profile = () => {
-  const [initializing, setInitializing] = useState(true);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false); // Loading state
-  const [posts, setPosts] = useState([]);
+const Profile = ({ userId }) => {
+  console.log(userId)
+  const { data, loading, error } = useFetchWithToken(
+    `${PORT}/api/user/profile/${userId}`,
+    "GET",
+  );
+  console.log(data);
+  console.log(loading, error);
 
-  function onAuthStateChanged(user) {
-    setUser(user);
-    if (initializing) setInitializing(false);
+  if (loading) {
+    console.log("Loading...");
+    return null; // or a loading spinner component
   }
 
-  useEffect(() => {
-    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
-    return subscriber;
-  }, []);
+  if (error) {
+    console.error("Error:", error);
+    return (
+      <View style={{ justifyContent: "center", alignItems: "center", height: 100 }}>
+        <Text style={styles.bio}>{error}</Text>
+      </View>
 
-  // Dummy Data for Posts and Events
+    ); // or an error message component
+  }
 
-  const [activeTab, setActiveTab] = useState("posts");
+  const user = data?.info || {};
+  console.log(user);
+
+  const SportsInfo = user.sportsInfo || [];
+
+  // Followers and Following Counts
+  const followers = user.followersCount || 0;
+  const following = user.followingCount || 0;
+
+  // Posts
+  const posts = user.myPostKeys || [];
+
+  // Display Data
+  console.log({
+    user,
+    SportsInfo,
+    followers,
+    following,
+    posts,
+  });
+
+
   return (
     <View style={styles.container}>
-      {/* Cover Photo */}
-      <Image
-        source={{ uri: "https://via.placeholder.com/600x200" }}
-        style={styles.coverImage}
-      />
-      <View style={{ justifyContent: "center", alignItems: "center" }}>
+      <View>
+        <Image
+          source={{ uri: "https://via.placeholder.com/600x200" }}
+          style={styles.coverImage}
+        />
+
         <View style={styles.profilePictureWrapper}>
-          <View>
-            <Image
-              source={{ uri: "https://via.placeholder.com/150" }}
-              style={styles.profileImage}
-            />
-          </View>
-          <Text style={styles.username}>User Name</Text>
+          <Image
+            source={{ uri: 'https://via.placeholder.com/200' }}
+            style={styles.profileImage}
+          />
+          <Text style={styles.username}>{user.userName}</Text>
           <Text style={styles.username}>
-            <Ionicons name="location" size={20} color={colors.text} />
-            Location
+            {user.location && (
+              <>
+                <Ionicons name="location" size={20} color={colors.text} />
+                <Text>{user.location}</Text>
+              </>
+            )}
+
           </Text>
         </View>
-      </View>
-      <Sports />
 
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-evenly",
-          marginBottom: 10,
-        }}
-      >
-        <TouchableOpacity style={styles.cheerButton}>
-          <Text style={{ color: colors.textWhite }}>Cheer</Text>
-          <AntDesign name="adduser" size={23} color={colors.textWhite} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.cheerButton}>
-          <Text style={{ color: colors.textWhite }}>Message</Text>
-          <AntDesign name="adduser" size={23} color={colors.textWhite} />
-        </TouchableOpacity>
-      </View>
+        <Sports data={SportsInfo} />
 
-      <View style={styles.userInfoSection}>
-        <View style={styles.statsRow}>
-          <TouchableOpacity style={styles.statItem}>
-            <Text style={styles.statValue}>120</Text>
-            <Text style={styles.statLabel}>Cheerer</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.statItem}>
-            <Text style={styles.statValue}>500</Text>
-            <Text style={styles.statLabel}>Cheering</Text>
-          </TouchableOpacity>
+
+        <View style={styles.userInfoSection}>
+          <View style={styles.statsRow}>
+            <TouchableOpacity
+              style={styles.statItem}
+              onPress={() => router.push("/(insider)/profile/Stats")}
+            >
+              <Text style={styles.statValue}>{followers}</Text>
+              <Text style={styles.statLabel}>Cheerer</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.statItem}
+              onPress={() => router.push("/(insider)/profile/Stats")}
+            >
+              <Text style={styles.statValue}>{following}</Text>
+              <Text style={styles.statLabel}>Cheering</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
       {/* Tab Navigation */}
       <View style={styles.tabs}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === "posts" && styles.activeTab]}
-          onPress={() => setActiveTab("posts")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === "posts" && styles.activeTabText,
-            ]}
-          >
-            Posts
-          </Text>
+        <TouchableOpacity style={styles.activeTab}>
+          <Text>Posts</Text>
         </TouchableOpacity>
       </View>
-      {/* Content Display based on Active Tab */}
-      <Posts posts={posts} />
+      <Posts post={posts} />
     </View>
   );
 };
@@ -123,6 +117,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+    flexDirection: "column",
   },
   coverImage: {
     width: "100%",
@@ -156,13 +151,6 @@ const styles = StyleSheet.create({
     padding: 3, // Adjust padding to make it look better
     borderRadius: 50, // To make the background circle around the icon
   },
-  cheerButton: {
-    flexDirection: "row",
-    backgroundColor: colors.primary,
-    padding: 10,
-    borderRadius: 5,
-    alignItems: "center",
-  },
   userInfoSection: {
     paddingHorizontal: theme.spacing.md,
   },
@@ -180,8 +168,7 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginTop: theme.spacing.sm,
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.lg,
   },
   statItem: {
     alignItems: "center",
@@ -219,47 +206,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     marginTop: theme.spacing.md,
   },
-  tab: {
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-  },
   activeTab: {
-    borderBottomWidth: 2,
-    borderBottomColor: theme.colors.primary,
-  },
-  tabText: {
-    fontSize: theme.fontSizes.md,
     color: theme.colors.primary,
-  },
-  activeTabText: {
-    color: theme.colors.primaryDark,
-  },
-  postsGrid: {
-    flex: 1,
-  },
-  postItem: {
-    width: wp("33.3%"),
-    padding: 5,
-  },
-  postImage: {
-    width: "100%",
-    height: wp("33.3%"),
-    borderRadius: 10,
-    resizeMode: "cover",
-  },
-  eventsContainer: {
-    paddingHorizontal: theme.spacing.md,
-  },
-  eventItem: {
-    marginBottom: theme.spacing.sm,
-  },
-  eventName: {
-    fontWeight: "bold",
-    fontSize: theme.fontSizes.md,
-  },
-  eventDate: {
-    fontSize: theme.fontSizes.sm,
-    color: theme.colors.secondary,
   },
 });
 

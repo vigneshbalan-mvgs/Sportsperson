@@ -229,16 +229,16 @@ const styles = StyleSheet.create({
   },
   selectedImageContainer: {
     width: "100%",
-    height: "100%",
     position: "relative",
     resizeMode: "cover",
     alignItems: "center",
     justifyContent: 'center',
+    aspectRatio: 1 / 1,
   },
   selectedImage: {
     width: "100%",
-    height: "100%",
     borderRadius: 10,
+    aspectRatio: 1 / 1,
   },
   selectedMediaContainer: {
     width: "100%",
@@ -247,8 +247,8 @@ const styles = StyleSheet.create({
   },
   selectedVideo: {
     width: "100%",
-    height: "100%",
     borderRadius: 10,
+    aspectRatio: 1 / 1,
   },
   postButton: {
     backgroundColor: "red",

@@ -3,10 +3,11 @@ import React from "react";
 import Profile from "@components/Profile/Profile";
 import BackButton from "@components/back";
 import Drawer from "@components/Drawer";
+import { colors } from "@/const/colors";
 
 const index = () => {
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ backgroundColor: colors.background }} >
       <BackButton />
       <Drawer />
       <ScrollView showsVerticalScrollIndicator={false}>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableWithoutFeedback, TouchableOpacity, View, Animated, Easing } from "react-native";
 import { colors, theme } from "../../const/colors";
 
 import { Ionicons } from "@expo/vector-icons";
@@ -8,8 +8,11 @@ import { router } from "expo-router";
 import Posts from "./PostGrid";
 import { PORT } from "../../const/PORT.js";
 import useFetchWithToken from "@/const/fetch";
+import constStyles from "@/const/Styles";
 
 const Profile = () => {
+  const [scale] = useState(new Animated.Value(1));
+
   const { data, loading, error } = useFetchWithToken(
     `${PORT}/api/user/myprofile`,
     "GET",
@@ -47,52 +50,75 @@ const Profile = () => {
     posts,
   });
 
+  const handleLongPress = () => {
+    // Animate the scale to make the image zoom in
+    Animated.timing(scale, {
+      toValue: 1.5,
+      duration: 200,
+      easing: Easing.ease,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    // Animate the scale back to the original size
+    Animated.timing(scale, {
+      toValue: 1, // Reset to original size
+      duration: 200,
+      easing: Easing.ease,
+      useNativeDriver: true,
+    }).start();
+  };
+
+
 
   return (
-    <View style={styles.container}>
-      <View>
-        <Image
-          source={{ uri: "https://via.placeholder.com/600x200" }}
-          style={styles.coverImage}
-        />
+    <View style={constStyles.ScreenContainer}>
+      <Image
+        source={{ uri: "https://via.placeholder.com/600x200" }}
+        style={styles.coverImage}
+      />
 
-        <View style={styles.profilePictureWrapper}>
-          <Image
-            source={{ uri: 'https://via.placeholder.com/200' }}
-            style={styles.profileImage}
-          />
-          <Text style={styles.username}>{user.userName}</Text>
-          <Text style={styles.username}>
-            {user.location && (
-              <>
-                <Ionicons name="location" size={20} color={colors.text} />
-                <Text>{user.location}</Text>
-              </>
-            )}
+      <View style={styles.profilePictureWrapper}>
+        <TouchableWithoutFeedback
+          onLongPress={handleLongPress}
+          onPressOut={handlePressOut}
+        >
+          <Animated.Image
+            source={{ uri: user.profile || 'https://via.placeholder.com/200' }}
+            style={[styles.profileImage, { transform: [{ scale }] }]} />
+        </TouchableWithoutFeedback>
+        <Text style={styles.username}>{user.userName}</Text>
+        <Text style={styles.username}>
+          {user.location && (
+            <>
+              <Ionicons name="location" size={20} color={colors.text} />
+              <Text>{user.location}</Text>
+            </>
+          )}
 
-          </Text>
-        </View>
+        </Text>
+      </View>
 
-        <Sports data={SportsInfo} />
+      <Sports data={SportsInfo} />
 
 
-        <View style={styles.userInfoSection}>
-          <View style={styles.statsRow}>
-            <TouchableOpacity
-              style={styles.statItem}
-              onPress={() => router.push("/(insider)/profile/Stats")}
-            >
-              <Text style={styles.statValue}>{followers}</Text>
-              <Text style={styles.statLabel}>Cheerer</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.statItem}
-              onPress={() => router.push("/(insider)/profile/Stats")}
-            >
-              <Text style={styles.statValue}>{following}</Text>
-              <Text style={styles.statLabel}>Cheering</Text>
-            </TouchableOpacity>
-          </View>
+      <View style={styles.userInfoSection}>
+        <View style={styles.statsRow}>
+          <TouchableOpacity
+            style={styles.statItem}
+            onPress={() => router.push("/(insider)/profile/Stats")}
+          >
+            <Text style={styles.statValue}>{followers}</Text>
+            <Text style={styles.statLabel}>Cheerer</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.statItem}
+            onPress={() => router.push("/(insider)/profile/Stats")}
+          >
+            <Text style={styles.statValue}>{following}</Text>
+            <Text style={styles.statLabel}>Cheering</Text>
+          </TouchableOpacity>
         </View>
       </View>
       {/* Tab Navigation */}
@@ -108,7 +134,6 @@ const Profile = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: theme.colors.background,
     flexDirection: "column",
   },

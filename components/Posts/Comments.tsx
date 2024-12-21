@@ -13,14 +13,16 @@ import {
   StatusBar,
 } from "react-native";
 import { colors } from "@/const/colors";
-import Button from "@components/Button";
 import TextInputComponent from "@components/TextInput";
+import * as SecureStore from "expo-secure-store";
+import Button from "@/components/Button"
 
-const CommentSectionOverlay = ({ isVisible, onClose, data, postId }) => {
-  const [comments, setComments] = useState(data || []);
+const CommentSectionOverlay = ({ isVisible, onClose, postId }) => {
+  const [comments, setComments] = useState([]);
   const [commentInput, setCommentInput] = useState("");
   const [loading, setLoading] = useState(false);
   const slideAnim = useRef(new Animated.Value(1000)).current; // Start off-screen
+
 
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
@@ -29,12 +31,13 @@ const CommentSectionOverlay = ({ isVisible, onClose, data, postId }) => {
         closeOverlay(); // Close the modal when the user swipes down by 100 pixels
       }
     },
-    onPanResponderRelease: () => {},
+    onPanResponderRelease: () => { },
   });
 
   useEffect(() => {
     if (isVisible) {
       openOverlay();
+      fetchComments();
     } else {
       closeOverlay();
     }
@@ -46,8 +49,6 @@ const CommentSectionOverlay = ({ isVisible, onClose, data, postId }) => {
       duration: 300,
       useNativeDriver: true,
     }).start();
-    StatusBar.setBarStyle("light-content");
-    StatusBar.setBackgroundColor("rgba(0, 0, 0, 0.6)");
   };
 
   const closeOverlay = () => {
@@ -56,29 +57,45 @@ const CommentSectionOverlay = ({ isVisible, onClose, data, postId }) => {
       duration: 300,
       useNativeDriver: true,
     }).start(() => onClose());
-    StatusBar.setBarStyle("dark-content");
-    StatusBar.setBackgroundColor("#fff");
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+  const fetchComments = async () => {
+    const sanitizedToken = await SecureStore.getItemAsync("token");
+    const token = sanitizedToken?.replace(/^"|"$/g, ""); // Removes leading and trailing quotes
+    try {
+      const url = `https://sportspersonz.com/api/user/comment/${postId}/view`;
+      const options = {
+        method: "GET",
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+        },
+      };
+      const response = await fetch(url, options);
+      const data = await response.json();
+      if (data.success) {
+        setComments(data.data || []); // Assuming `data.comments` contains the comment list
+        console.log(comments)
+        console.log(postId);
+      }
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+    }
   };
 
   const handlePostComment = async () => {
     if (commentInput.trim() === "") return; // Prevent posting empty comments
+    const sanitizedToken = await SecureStore.getItemAsync("token");
+    const token = sanitizedToken?.replace(/^"|"$/g, ""); // Removes leading and trailing quotes
+
 
     setLoading(true);
-    const url = `http://147.79.68.157:4500/api/user/comment/${postId}`;
+    const url = `https://sportspersonz.com/api/user/comment/${postId}`;
     const options = {
       method: "POST",
       headers: {
-        authorization:
-          "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3NWM1ZGY3MWQ0YWE5MmFhNjZlOGU5NiIsInV1aWQiOiJWbXpJc2xfSkdwWGNrbHotdm5sekIiLCJFbWFpbF9JRCI6InZpZ25lc2hiYWxhbm12Z3MyMDAzQGdtYWlsLmNvbSIsImlhdCI6MTczNDEwNjY0MSwiZXhwIjoxNzM0MTkzMDQxfQ.6jp-Z6NfXOrZqTvdS1pBvD1Av3IZXW4s_dLh69reHt4",
+        authorization: `Bearer ${token}`,
+
         "content-type": "application/json",
       },
       body: JSON.stringify({ comment: commentInput }),
@@ -87,6 +104,7 @@ const CommentSectionOverlay = ({ isVisible, onClose, data, postId }) => {
     try {
       const response = await fetch(url, options);
       const data = await response.json();
+      console.log(data)
       if (data.success) {
         setComments([
           ...comments,
@@ -101,12 +119,44 @@ const CommentSectionOverlay = ({ isVisible, onClose, data, postId }) => {
     }
   };
 
+  const handleDeleteComment = async (commentId) => {
+    const url = `https://sportspersonz.com/api/user/comment/${commentId}`;
+    const options = {
+      method: "DELETE",
+      headers: {
+        authorization: "Bearer YOUR_BEARER_TOKEN",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ commentBy: ["YOUR_USER_ID"] }),
+    };
+
+    try {
+      const response = await fetch(url, options);
+      const data = await response.json();
+      if (data.success) {
+        setComments(comments.filter((comment) => comment.id !== commentId)); // Remove deleted comment from UI
+      }
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   return (
     <Modal
       animationType="none"
       transparent={true}
       visible={isVisible}
       onRequestClose={closeOverlay}
+      statusBarTranslucent
     >
       <TouchableWithoutFeedback onPress={closeOverlay}>
         <View style={overlayStyles.overlayContainer}>
@@ -120,21 +170,15 @@ const CommentSectionOverlay = ({ isVisible, onClose, data, postId }) => {
             <Text style={overlayStyles.title}>Comments</Text>
             <ScrollView style={overlayStyles.scrollContainer}>
               {comments.length > 0 ? (
-                comments.map((comment, index) => (
-                  <View key={index} style={overlayStyles.commentContainer}>
+                comments.map((comment) => (
+                  <View key={comment._id} style={overlayStyles.commentContainer}>
                     <Image
-                      source={{
-                        uri: comment.commentProfile,
-                      }}
+                      source={{ uri: comment.Img || "https://placehold.co/40x40" }} // Fallback for missing images
                       style={overlayStyles.avatar}
                     />
                     <View style={overlayStyles.commentContent}>
-                      <Text style={overlayStyles.username}>
-                        {comment.commentBy}
-                      </Text>
-                      <Text style={overlayStyles.commentText}>
-                        {comment.comment}
-                      </Text>
+                      <Text style={overlayStyles.username}>{comment.username || "Unknown"}</Text>
+                      <Text style={overlayStyles.commentText}>{comment.comment}</Text>
                       <Text style={overlayStyles.commentDate}>
                         {formatDate(comment.createdAt)}
                       </Text>
@@ -146,24 +190,25 @@ const CommentSectionOverlay = ({ isVisible, onClose, data, postId }) => {
               )}
             </ScrollView>
 
-            <View style={overlayStyles.commentInputContainer}>
-              <TextInputComponent
-                placeholder="Write a comment..."
-                value={commentInput}
-                onChangeText={setCommentInput}
-                style={{ flex: 1, paddingRight: 10 }}
-              />
-              <Button
-                title="Post"
-                type="primaryAuto"
-                onPress={handlePostComment}
-                disabled={loading}
-              />
-            </View>
-
-            {loading && (
+            {loading ? (
               <ActivityIndicator size="large" color={colors.primary} />
+            ) : (
+              <View style={overlayStyles.commentInputContainer}>
+                <TextInputComponent
+                  placeholder="Write a comment..."
+                  value={commentInput}
+                  onChangeText={setCommentInput}
+                  style={{ flex: 1, paddingRight: 10 }}
+                />
+                <Button
+                  title="Post"
+                  type="primaryAuto"
+                  onPress={handlePostComment}
+                  disabled={loading}
+                />
+              </View>
             )}
+
           </Animated.View>
         </View>
       </TouchableWithoutFeedback>
@@ -178,7 +223,7 @@ const overlayStyles = StyleSheet.create({
     height: "100%",
     justifyContent: "flex-end",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.2)", // Dark overlay
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
   },
   overlayContent: {
     width: "100%",
@@ -232,8 +277,8 @@ const overlayStyles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 10,
   },
 });
 
 export default CommentSectionOverlay;
+

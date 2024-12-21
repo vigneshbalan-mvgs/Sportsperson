@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Image,
   Animated,
+  Modal
 } from "react-native";
 
 import SkeletonPlaceholder from "react-native-skeleton-placeholder";
@@ -23,20 +24,22 @@ import {
 import { br, colors } from "@/const/colors";
 import constStyles from "@/const/Styles";
 import CommentSectionOverlay from "./Comments";
+import Options from "./Options";
 
 const Post = ({ post }) => {
   const {
     postId = post.postId || "123",
+    userId = post.userId || "123",
     profileImage = post.userProfile || "https://via.placeholder.com/150",
     userName = post.userName || "Anonymous",
     location = post.location || "No location provided",
-    imageUrl = { uri: post.URL[0] || "https://via.placeholder.com/400" },
+    imageUrl = { uri: post.URL || "https://via.placeholder.com/400" },
     postDescription = post.description || "No description provided",
     type = post.type,
-    likes = post.likes?.length || 0,
+    likes = post.lc || 0,
     comments = post.comments || [],
   } = post;
-
+  const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
   const [doubleTapCount, setDoubleTapCount] = useState(0);
@@ -44,6 +47,7 @@ const Post = ({ post }) => {
   const animationOpacity = useRef(new Animated.Value(0)).current;  // Heart animation opacity
   const scaleValue = useRef(new Animated.Value(0)).current; // Heart scale animation
   const [isCommentOverlayVisible, setCommentOverlayVisible] = useState(false);
+  const [isModalVisible, setModalVisible] = useState(false);
 
   // Simulate loading time
   useEffect(() => {
@@ -52,6 +56,13 @@ const Post = ({ post }) => {
     }, 1500);
     return () => clearTimeout(timer);
   }, []);
+
+  const option = () => {
+    setModalVisible(true);
+
+    console.log("Option clicked");
+
+  }
 
   const handleLike = () => {
     setLiked(!liked);
@@ -124,8 +135,12 @@ const Post = ({ post }) => {
               </TouchableOpacity>
               <View style={styles.headerTextWrapper}>
                 <TouchableOpacity
-                  onPress={() =>
-                    router.push("/(insider)/profile/ProfileOthers")
+                  onPress={() => {
+                    router.push({
+                      pathname: "/(insider)/profile/ProfileOthers",
+                      params: { postId: JSON.stringify(postId) },
+                    });
+                  }
                   }
                 >
                   <Text style={styles.title}>{userName}</Text>
@@ -142,7 +157,7 @@ const Post = ({ post }) => {
                 </TouchableOpacity>
               </View>
             </View>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => setModalVisible(true)}>
               <MaterialCommunityIcons
                 name="dots-vertical"
                 size={24}
@@ -170,7 +185,8 @@ const Post = ({ post }) => {
               {/*       : require("../../assets/icons/success.png") */}
               {/*   } */}
               {/* /> */}
-              <AntDesign name="heart" size={50} color={colors.primary} />
+              <AntDesign name="heart" size={50} color={liked ? colors.primary : colors.secondary} />
+
             </Animated.View>
 
           </TouchableOpacity>
@@ -221,9 +237,17 @@ const Post = ({ post }) => {
       <CommentSectionOverlay
         isVisible={isCommentOverlayVisible}
         onClose={() => setCommentOverlayVisible(false)}
-        data={comments}
         postId={postId}
       />
+
+      <Options
+        isVisible={isModalVisible}
+        onClose={() => setModalVisible(false)}
+        postId={postId}
+        postUserUuid={userId}
+      />
+
+
     </View>
   );
 };

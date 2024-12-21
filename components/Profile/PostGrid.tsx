@@ -33,7 +33,7 @@ const Posts = ({ post }) => {
           style={styles.postItem}
           onPress={() => {
             console.log("Media clicked:", item);
-            router.push("/profile/PostDetails");
+            router.push("/(insider)/profile/ProfilePosts");
           }}
         >
           {item.type === "image" ? (

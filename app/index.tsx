@@ -5,7 +5,8 @@ import auth from "@react-native-firebase/auth";
 import * as SecureStore from "expo-secure-store";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Progress from "react-native-progress";
-import { PORT, fetchToken } from "const/PORT";
+import { PORT } from "const/PORT";
+import { saveImage, getToken } from "@/hooks/userDetails";
 
 import { colors } from "../const/colors";
 import { widthPercentageToDP as wp } from "react-native-responsive-screen";
@@ -13,7 +14,17 @@ import { widthPercentageToDP as wp } from "react-native-responsive-screen";
 async function getSecureStoreItem(key: any) {
   try {
     const result = await SecureStore.getItemAsync(key);
-    console.log(result);
+    const token = await getToken();
+    const response = await fetch(`${PORT}/api/user/myprofile`, {
+      method: "GET",
+      headers: {
+        authorization: `Bearer ${token}`,
+        "content-type": "application/json",
+      },
+    });
+    const data = await response.json();  // Await the response.json()
+    console.log(data);
+    saveImage(data.info.profile);
     return result ? JSON.parse(result) : null;
   } catch (error) {
     console.error("Error reading secure store:", error);
@@ -29,6 +40,7 @@ export default function SplashScreen() {
   const delayTime = 10;
   const progressSpeed = 80;
   const progressIncrement = 0.05;
+
   const startProgress = () => {
     setTimeout(() => {
       const interval = setInterval(() => {
@@ -45,23 +57,20 @@ export default function SplashScreen() {
 
   useFocusEffect(
     React.useCallback(() => {
-      console.log("Component focused");
       const subscriber = auth().onAuthStateChanged(async (currentUser) => {
         const isLoggedIn = await getSecureStoreItem("isLoggedIn");
         setUser(currentUser || isLoggedIn);
         startProgress();
       });
       return () => {
-        console.log("Cleaning up focus effect");
         subscriber();
       };
-    }, []),
+    }, [])
   );
 
   useEffect(() => {
     console.log(PORT);
-    fetchToken();
-  }, []); // Logs only once when component mounts
+  }, []);
 
   useEffect(() => {
     if (progress >= 1) {
@@ -103,3 +112,4 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 });
+

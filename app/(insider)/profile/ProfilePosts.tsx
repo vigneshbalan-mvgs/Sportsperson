@@ -1,12 +1,7 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  useMemo,
-} from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   StyleSheet,
+  Text,
   View,
   FlatList,
   ActivityIndicator,
@@ -23,33 +18,32 @@ import { colors } from "@/const/colors";
 import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
 import { PORT } from "@/const/PORT";
-import Video from "./Video"; // Assuming Video component handles play/pause
+import Video from "@components/Posts/Video";
+import BackButton from "@components/back";
 
-const API_URL = PORT + "/api/user/home";
+const API_URL = PORT + "/api/user/mypost";
 
-const PostMain = () => {
+const ProfilePosts = () => {
   const [posts, setPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [usedIds, setUsedIds] = useState(new Set());
-  const [token, setToken] = useState(undefined); // Undefined during initialization
-  const [page, setPage] = useState(1); // For pagination
-  const [refreshKey, setRefreshKey] = useState(0); // Key to force re-render
-  const [visibleVideoIndex, setVisibleVideoIndex] = useState(null); // Track the index of the visible video
-  const debounce = useRef(false);
+  const [token, setToken] = useState(undefined);
+  const [page, setPage] = useState(1);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [username, setUsername] = useState("");
 
   useEffect(() => {
     const getToken = async () => {
       try {
         const storedToken = await SecureStore.getItemAsync("token");
         if (storedToken) {
-          const sanitizedToken = storedToken.replace(/^"|"$/g, ""); // Clean the token
-          setToken(sanitizedToken);
+          setToken(storedToken.replace(/^"|"$/g, ""));
         } else {
           router.replace("/login");
         }
       } catch (error) {
-        console.error("Failed to retrieve token", error);
+        console.error("Token retrieval error:", error);
         router.replace("/login");
       }
     };
@@ -57,9 +51,11 @@ const PostMain = () => {
   }, []);
 
   useEffect(() => {
-    if (token === undefined) return; // Skip until token is initialized
+    if (token === undefined) return;
     if (!token) {
       router.replace("/login");
+    } else {
+      fetchPosts(true);
     }
   }, [token]);
 
@@ -77,12 +73,18 @@ const PostMain = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch posts");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to fetch posts");
       }
 
       const data = await response.json();
-      if (data.status) {
-        const newPosts = data.posts.filter((post) => !usedIds.has(post.postId));
+      console.log("Fetched data:", data);
+      setUsername(data.data.userName);
+
+      if (data.status && data.data && Array.isArray(data.data.myPostKeys)) {
+        const newPosts = data.data.myPostKeys.filter(
+          (post) => !usedIds.has(post.postId)
+        );
 
         if (newPosts.length > 0) {
           setPosts((prevPosts) =>
@@ -99,62 +101,41 @@ const PostMain = () => {
           setPage((prevPage) => prevPage + 1);
         }
       } else {
-        Alert.alert("Error", data.message || "Failed to fetch posts.");
+        Alert.alert("Error", data.message || "Unexpected API response.");
       }
     } catch (error) {
       console.error("Error fetching posts:", error);
       Alert.alert(
         "Error",
-        `${error.message} try to login again` ||
-        "Unable to load posts. Please try again later."
+        error.message || "Unable to load posts. Please try again later."
       );
     }
   };
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    setPage(1);
     setPosts([]);
     setUsedIds(new Set());
-    setRefreshKey((prevKey) => prevKey + 1);
+    setRefreshKey((prev) => prev + 1);
     fetchPosts(true).finally(() => setRefreshing(false));
   }, [fetchPosts]);
 
   const loadMorePosts = async () => {
-    if (isFetchingMore || !token) return;
-
-    setIsFetchingMore(true);
-    try {
+    if (!isFetchingMore && token) {
+      setIsFetchingMore(true);
       await fetchPosts();
-
-      setPage((prevPage) => prevPage + 1);
-    } catch (error) {
-      console.error("Error loading more posts:", error);
-    } finally {
       setIsFetchingMore(false);
     }
   };
 
-  useEffect(() => {
-    if (token) {
-      fetchPosts(true);
-    }
-  }, [token]);
-
-  const renderPost = useMemo(() => {
-    return ({ item, index }) => (
+  const renderPost = useMemo(
+    () => ({ item }) => (
       <GestureHandlerRootView>
-        {item.type === "image" ? (
-          <Post post={item} />
-        ) : (
-          <Video
-            post={item}
-            isVisible={index === visibleVideoIndex} // Pass visibility to the Video component
-          />
-        )}
+        {item.type === "image" ? <Post post={item} /> : <Video post={item} />}
       </GestureHandlerRootView>
-    );
-  }, [visibleVideoIndex]);
+    ),
+    []
+  );
 
   const renderFooter = () => {
     if (!isFetchingMore) return null;
@@ -165,32 +146,20 @@ const PostMain = () => {
     );
   };
 
-  const onViewableItemsChanged = useRef(({ viewableItems }) => {
-    // Adjust the threshold for video visibility
-    const threshold = 0.5; // Set this value to determine when the video should play (e.g., 30% visible)
-    const visibleIndex = viewableItems.findIndex(
-      (item) => item.isViewable && item.index !== undefined
-    );
-
-    if (visibleIndex !== -1) {
-      const item = viewableItems[visibleIndex];
-      const isVisible = item.item.index >= threshold;
-      setVisibleVideoIndex(isVisible ? item.index : null); // Update visible video index
-    }
-  });
-
   return (
+
     <View style={styles.container}>
+      <View style={{ width: wp(100), height: 80, alignItems: "center", justifyContent: "center", flexDirection: "row" }}>
+        <BackButton />
+        <Text style={{ fontSize: 20, fontWeight: "bold" }}>{username}</Text>
+      </View>
       <FlatList
-        windowSize={10}
-        key={refreshKey}
         data={posts}
         keyExtractor={(item) => item.postId.toString()}
         renderItem={renderPost}
         onEndReached={loadMorePosts}
-        onEndReachedThreshold={0.2}
+        onEndReachedThreshold={0}
         ListFooterComponent={renderFooter}
-        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -198,15 +167,17 @@ const PostMain = () => {
             colors={[colors.primary, colors.secondary, colors.primary]}
           />
         }
+        windowSize={15}
         initialNumToRender={10}
         maxToRenderPerBatch={5}
-        onViewableItemsChanged={onViewableItemsChanged.current}
+        key={refreshKey}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );
 };
 
-export default PostMain;
+export default ProfilePosts;
 
 const styles = StyleSheet.create({
   container: {

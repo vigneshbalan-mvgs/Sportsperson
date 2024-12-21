@@ -52,7 +52,7 @@ const Sports = ({ data }) => {
               onPress={() => openModal(item)}
             >
               <Image
-                source={{ uri: item.sp }}
+                source={{ uri: item.sp || "https://via.placeholder.com/150" }}
                 style={styles.sportsimage}
                 resizeMode="cover"
               />

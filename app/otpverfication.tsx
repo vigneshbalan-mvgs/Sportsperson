@@ -12,30 +12,29 @@ import { router } from "expo-router";
 import BackButton from "@components/back";
 import { colors, fontSizes, spacing, br, bw } from "../const/colors";
 import constStyles from "../const/Styles";
-import { PORT } from "@/const/PORT";
+import { PORT } from "../const/PORT"
 
 export default function OtpVerification() {
   const route = useRoute();
-  const { data, otp } = route.params; // Access the OTP, bearer token, and email
-  console.log("Verifying OTP:", otp, data); // Log the received OTP and token
-  const token = data;
-  const [code, setCode] = useState("");
+  const { data, otp, token } = route.params; // Access the OTP, bearer token, and email
+  console.log("Verifying OTP:", otp, data, token); // Log the received OTP and token
+  const [code, setCode] = useState(otp);
   const [loading, setLoading] = useState(false);
+  const token1 = token?.replace(/^"|"$/g, "");
 
-  // Function to handle OTP verification
+
   const handleVerify = async (code) => {
     if (code === otp) {
-      // Make the API request to verify the OTP
       try {
         setLoading(true);
         const url = `${PORT}/api/auth/verify`;
         const options = {
           method: "POST",
           headers: {
-            authorization: `Bearer ${data}`, // Use the Bearer token from route.params
+            authorization: `Bearer ${token1}`,
             "content-type": "application/json",
           },
-          body: JSON.stringify({ code }),
+          body: JSON.stringify({ code: code.toString() }),
         };
 
         const response = await fetch(url, options);
@@ -73,7 +72,7 @@ export default function OtpVerification() {
           <View style={styles.pinCodeContainer}>
             <Text style={constStyles.subheadingText}>Check your email</Text>
             <Text style={constStyles.textAlignLeft}>
-              We sent OTP to {token}
+              We sent OTP to {data}
             </Text>
           </View>
           <View style={styles.otpcontainer}>
@@ -117,3 +116,4 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
 });
+

@@ -83,7 +83,7 @@ export default function Register() {
         console.log(data.verification);
         router.push({
           pathname: "/otpverfication",
-          params: { data: data.data, otp: data.Verification },
+          params: { data: email, token: data.data, otp: data.Verification },
         });
       } else {
         alert(data.message);

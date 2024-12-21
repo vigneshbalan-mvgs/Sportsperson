@@ -15,6 +15,8 @@ import auth from "@react-native-firebase/auth";
 import { FirebaseError } from "firebase/app";
 import { Link, router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+import { saveImage, saveName, saveToken, saveUuid } from '@/hooks/userDetails';
+
 
 import {
   GoogleSignin,
@@ -132,9 +134,14 @@ export default function Index() {
 
       const result = await response.json();
       console.log(result);
+
       if (result.status) {
         await SecureStore.setItemAsync("isLoggedIn", JSON.stringify(true));
-        await SecureStore.setItemAsync("token", JSON.stringify(result.Token));
+        await saveImage(JSON.stringify(result.UserInfo.userInfo.Profile_ImgURL));
+        await saveName(JSON.stringify(result.UserInfo.userInfo.Nickname));
+        await saveToken(JSON.stringify(result.Token));
+        await saveUuid(JSON.stringify(result.UserInfo.uuid));
+        console.log("Redirecting to home...");
 
         router.replace("/Home/");
       } else {

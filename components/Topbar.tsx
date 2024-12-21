@@ -16,6 +16,8 @@ import {
   statusCodes,
 } from "@react-native-google-signin/google-signin";
 import PasswordInput from "./Input";
+import * as SecureStore from "expo-secure-store";
+import { getImage } from "@/hooks/userDetails";
 
 // Initialize Google Sign-In
 GoogleSignin.configure({
@@ -25,6 +27,7 @@ GoogleSignin.configure({
 const Topbar = () => {
   const [userInfo, setUserInfo] = useState(null);
   const [count, setCount] = useState(true);
+  const [profileImage, setProfileImage] = useState(null);
 
   const dotAnimValues = [
     new Animated.Value(0),
@@ -43,6 +46,16 @@ const Topbar = () => {
     return unsubscribe;
   }, []);
 
+  useEffect(() => {
+    // Fetch profile image
+    const fetchImage = async () => {
+      const image = await getImage();
+      setProfileImage(image || "https://profilepics.s3.amazonaws.com/default_profile.png");
+    };
+
+    fetchImage();
+  }, []); // Empty dependency array ensures this runs once on mount
+
   const signInWithGoogle = async () => {
     try {
       const { idToken } = await GoogleSignin.signIn();
@@ -58,15 +71,11 @@ const Topbar = () => {
       }
     }
   };
-  // Handle click on Notification
+
   const handleNotificationClick = () => {
     setCount(!count);
     router.push("/Notification/");
   };
-
-  const profileImage = userInfo?.photoURL
-    ? { uri: userInfo.photoURL }
-    : require("../assets/images/Banner.png");
 
   return (
     <View style={styles.Topbar}>
@@ -125,7 +134,7 @@ const Topbar = () => {
           onPress={() => router.push("/profile/")}
         >
           <Image
-            source={profileImage}
+            source={{ uri: profileImage }}
             style={{ width: 40, height: 40, borderRadius: 20 }}
           />
         </TouchableOpacity>
@@ -189,3 +198,4 @@ const styles = StyleSheet.create({
     marginHorizontal: 3,
   },
 });
+

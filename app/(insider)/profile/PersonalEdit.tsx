@@ -6,7 +6,7 @@ import {
   View,
   TouchableOpacity,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import BackButton from "@components/back";
 import RightIcon from "@components/RightIcon";
 import TextInputComponent from "@components/TextInput";
@@ -18,13 +18,15 @@ import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker"; // Importing ImagePicker
 import { PORT } from "@/const/PORT";
 import useFetchWithToken from "@/const/fetch";
+import { getImage, getName, getToken, getUuid } from '@/hooks/userDetails';
+
 
 const PersonalDetails = () => {
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [nickname, setNickname] = useState("");
-  const [Phone_Number, setPhone_Number] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [dob, setDob] = useState("");
   const [gender, setGender] = useState("");
   const [work, setWork] = useState("");
@@ -35,6 +37,20 @@ const PersonalDetails = () => {
   const [profileImage, setProfileImage] = useState(
     "https://via.placeholder.com/150", // Default profile image
   );
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      const imageUrl = await getImage();
+      setProfileImage(imageUrl);
+      const userName = await getName();
+      setNickname(userName);
+
+      console.log({ imageUrl, userName });
+    };
+
+    loadUserData(); // Call the function once when the component mounts
+  }, []); // Empty dependency array ensures it runs only once
+
 
   const handleAddSchool = () => {
     if (schools.length >= 4) {
@@ -55,8 +71,6 @@ const PersonalDetails = () => {
   const handleSave = async () => {
     // Validation to ensure all required fields are filled
     const allFieldsValid =
-      schools.every((school) => school.trim() !== "") &&
-      colleges.every((college) => college.trim() !== "") &&
       profileImage !== "https://via.placeholder.com/150"; // Example check for profile image
 
     if (!allFieldsValid) {
@@ -67,12 +81,14 @@ const PersonalDetails = () => {
     // Prepare FormData to send to the API
     const formData = new FormData();
     formData.append("Nickname", nickname);
-    formData.append("Phone_Number", Phone_Number);
+    formData.append("Phone_Number", phoneNumber);
     formData.append("Date_of_Birth", dob);
     formData.append("Gender", gender);
     formData.append("Work", work);
     formData.append("Club", club);
 
+    formData.append("First_Name", firstName);
+    formData.append("Last_Name", lastName);
     schools.forEach((school, index) => {
       formData.append(`Education[school][${index}]`, school);
     });
@@ -94,14 +110,22 @@ const PersonalDetails = () => {
     formData.append("Profile_ImgURL", fileToUpload);
 
     try {
-      const { data, loading, error } = useFetchWithToken(
-        `${PORT}/api/user/profile_save`,
-        "POST",
-        formData,
-      );
-      console.log(data, loading, error);
+      const options = {
+        method: 'POST',
+        headers: {
+          "Content-Type": "multipart/form-data",
+          authorization: `Bearer ${await getToken()}`,
+        },
+        body: formData
 
-      console.log(data); // Handle response data
+      }
+      console.log("Token:", await getToken());
+      const response = await fetch(`${PORT}/api/user/profile_save`, options);
+
+      const data = await response.json(); // Parse the JSON response
+
+      console.log(data); // Log the response data for debugging
+
       if (data.success) {
         alert("Profile updated successfully!");
         router.back(); // Navigate back
@@ -130,7 +154,7 @@ const PersonalDetails = () => {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1], // Make it a square
-        quality: 1, // Highest quality
+        quality: 0.7, // Highest quality
       });
 
       if (result.canceled) {
@@ -204,12 +228,13 @@ const PersonalDetails = () => {
 
         {/* Name */}
         <Text style={constStyles.labelText}>Name</Text>
-        <TextInputComponent placeholder="Name" onChangeText={setFirstName} />
+        <TextInputComponent placeholder="Name" value={firstName} onChangeText={setFirstName} />
 
         {/* Nickname */}
         <Text style={constStyles.labelText}>Nick Name</Text>
         <TextInputComponent
           placeholder="Display Name"
+          value={nickname}
           onChangeText={setNickname}
         />
 
@@ -219,24 +244,20 @@ const PersonalDetails = () => {
           <TextInputComponent
             style={styles.flex}
             placeholder="Phone Number"
+            value={phoneNumber}
             onChangeText={setPhoneNumber}
           />
           <TouchableOpacity style={styles.verifyButton}>
             <AntDesign name="check" size={24} color={colors.primary} />
           </TouchableOpacity>
         </View>
-
-        {/* Email ID */}
-        <Text style={constStyles.labelText}>Email Id</Text>
-        <TextInputComponent placeholder="Email Id" />
-
         {/* Date of Birth */}
         <Text style={constStyles.labelText}>Date of Birth</Text>
-        <TextInputComponent placeholder="Date of Birth" />
+        <TextInputComponent value={dob} placeholder="Date of Birth" onChangeText={setDob} />
 
         {/* Gender */}
         <Text style={constStyles.labelText}>Gender</Text>
-        <TextInputComponent placeholder="Gender" />
+        <TextInputComponent value={gender} placeholder="Gender" onChangeText={setGender} />
 
         {/* Schools */}
         <Text style={constStyles.labelText}>Schools</Text>
@@ -280,11 +301,11 @@ const PersonalDetails = () => {
 
         {/* Work */}
         <Text style={constStyles.labelText}>Currently Working At</Text>
-        <TextInputComponent placeholder="Workplace Name" />
+        <TextInputComponent placeholder="Workplace Name" value={work} onChangeText={setWork} />
 
         {/* Club */}
         <Text style={constStyles.labelText}>Current Club Name</Text>
-        <TextInputComponent placeholder="Club Name" />
+        <TextInputComponent placeholder="Club Name" value={club} onChangeText={setClub} />
       </ScrollView>
     </View>
   );
@@ -330,3 +351,4 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
   },
 });
+

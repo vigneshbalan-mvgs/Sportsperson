@@ -27,16 +27,16 @@ import { Video } from "expo-av";
 import BackButton from "@components/back";
 import RightIcon from "@components/RightIcon";
 
-const VideoPost = ({ post }) => {
+const VideoPost = ({ post, isVisible }) => {
+  const videoRef = useRef(null);
   const {
     postId = post.postId || "123",
     profileImage = post.userProfile || "https://via.placeholder.com/150",
     userName = post.userName || "Anonymous",
     location = post.location || "No location provided",
-    videoUrl = post.URL[0] || "https://via.placeholder.com/video.mp4",
+    videoUrl = post.URL || "https://via.placeholder.com/video.mp4",
     postDescription = post.description || "No description provided",
-    likes = post.likes?.length || 0,
-    comments = post.comments || [],
+    likes = post.lc || 0,
   } = post;
 
   const [loading, setLoading] = useState(true);
@@ -46,6 +46,30 @@ const VideoPost = ({ post }) => {
   const animationOpacity = useRef(new Animated.Value(0)).current;
   const [isCommentOverlayVisible, setCommentOverlayVisible] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
+  const [status, setStatus] = useState({});
+
+
+
+  const handleVideoLoadStart = () => {
+    setIsVideoLoading(true);
+  };
+
+  const handleVideoReady = () => {
+    setIsVideoLoading(false);
+  };
+
+
+  useEffect(() => {
+    if (videoRef.current) {
+      if (isVisible) {
+        videoRef.current.playAsync();
+      } else {
+        videoRef.current.pauseAsync();
+      }
+    }
+  }, [isVisible]);
+
 
   // Simulate loading time
   useEffect(() => {
@@ -96,15 +120,33 @@ const VideoPost = ({ post }) => {
   };
 
   if (!post) {
-    return <Text>No content available</Text>;
+    return (
+      <View style={styles.card}>
+        <Text style={styles.subtitle}>No content available</Text>
+      </View>
+    );
   }
+
+
+
 
   return (
     <View style={styles.container}>
       {loading ? (
         <SkeletonPlaceholder>
           <View style={styles.card}>
-            {/* Skeleton placeholders */}
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <View style={styles.profile} />
+              <View style={{ marginLeft: 10 }}>
+                <View style={{ width: 120, height: 12 }} />
+                <View style={{ width: 80, height: 10, marginTop: 5 }} />
+              </View>
+            </View>
+            <View style={styles.videoContent} />
+            <View style={styles.socialIcons}>
+              <View style={{ width: 50, height: 20 }} />
+              <View style={{ width: 50, height: 20, marginLeft: 10 }} />
+            </View>
           </View>
         </SkeletonPlaceholder>
       ) : (
@@ -148,12 +190,17 @@ const VideoPost = ({ post }) => {
             activeOpacity={0.8}
           >
             <View>
+
               <Video
+                ref={videoRef}
                 source={{ uri: videoUrl }}
                 style={styles.videoContent}
                 isMuted={false}
                 shouldPlay={false}
                 useNativeControls
+                onLoadStart={handleVideoLoadStart}
+                onReadyForDisplay={handleVideoReady}
+                onPlaybackStatusUpdate={(status) => setStatus(() => status)}
               />
               <Animated.View
                 style={[
@@ -217,26 +264,70 @@ const VideoPost = ({ post }) => {
         transparent={true}
         animationType="slide"
         onRequestClose={() => setModalVisible(false)}
+        statusBarTranslucent
       >
         <View style={styles.modalContent}>
           <RightIcon icon="back" onPress={() => setModalVisible(false)} />
-          <Video
-            source={{ uri: videoUrl }}
-            style={styles.fullScreenVideo}
-            isMuted={false}
-            useNativeControls
-            isLooping
-          />
+          <TouchableOpacity onPress={() => console.log("Play Video")}>
+            <View>
+              <Video
+                source={{ uri: videoUrl }}
+                style={styles.fullScreenVideo}
+                isMuted={false}
+                useNativeControls
+                isLooping
+              />
+            </View>
+          </TouchableOpacity>
+          <View style={styles.socialIconsModal}>
+            <TouchableOpacity
+              onPress={handleLike}
+              style={{ flexDirection: "row", gap: 5 }}
+            >
+              <Image
+                source={
+                  liked
+                    ? require("../../assets/icons/success-1.png")
+                    : require("../../assets/icons/success.png")
+                }
+                style={{ width: 30, height: 30 }}
+              />
+            </TouchableOpacity>
+            <Text
+              style={{ color: liked ? colors.primary : colors.background, fontSize: 15 }}
+            >
+              {likes}
+            </Text>
+            <TouchableOpacity onPress={() => setCommentOverlayVisible(true)}>
+              <FontAwesome
+                name="comment-o"
+                size={30}
+                color={colors.background}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Ionicons
+                name="paper-plane"
+                size={30}
+                color={colors.background}
+              />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerModal}>
+            <Text style={styles.title}>{userName}</Text>
+            <Text style={styles.subtitle} numberOfLines={2} aria-modal>
+              {postDescription}
+            </Text>
+          </View>
         </View>
-      </Modal>
+      </Modal >
 
       <CommentSectionOverlay
         isVisible={isCommentOverlayVisible}
         onClose={() => setCommentOverlayVisible(false)}
-        data={comments}
         postId={postId}
       />
-    </View>
+    </View >
   );
 };
 
@@ -265,6 +356,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
+  headerModal: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
   profile: {
     width: 50,
     height: 50,
@@ -284,9 +382,10 @@ const styles = StyleSheet.create({
   },
   videoContent: {
     width: "100%",
-    height: "auto",
-    aspectRatio: 1 / 2,
+    aspectRatio: 1 / 1,
     borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
   },
   socialIcons: {
     flexDirection: "row",
@@ -294,6 +393,15 @@ const styles = StyleSheet.create({
     marginTop: 10,
     gap: 10,
   },
+  socialIconsModal: {
+    position: "absolute",
+    alignItems: "center",
+    marginTop: 10,
+    gap: 10,
+    right: 10,
+    bottom: 200
+  },
+
   likeAnimation: {
     position: "absolute",
     top: "50%",
@@ -308,8 +416,8 @@ const styles = StyleSheet.create({
 
   },
   fullScreenVideo: {
-    width: Dimensions.get("window").width - 10,
-    height: Dimensions.get("window").height - 10,
+    width: "100%",
+    height: "100%",
   },
   closeButton: {
     position: "absolute",

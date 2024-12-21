@@ -2,7 +2,6 @@ import { AntDesign } from "@expo/vector-icons";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import React, { useState, useRef, useEffect } from "react";
 import {
-  Button,
   Modal,
   SafeAreaView,
   StyleSheet,
@@ -15,11 +14,13 @@ import { StatusBar } from "expo-status-bar";
 import * as ImagePicker from "expo-image-picker";
 import PostScreen from "@components/CreatePost/PostScreen";
 import RightIcon from "@components/RightIcon";
+import Button from "@components/Button";
+
 
 export default function App() {
   let cameraRef = useRef(null);
   const [facing, setFacing] = useState<CameraType>("back");
-  const [permission, requestPermission] = useCameraPermissions();
+  const [permission, requestPermission] = useCameraPermissions(); // Using the hook for camera permissions
   const [hasPermission, setHasPermission] = useState(false);
   const [photo, setPhoto] = useState(null);
   const [taken, setTaken] = useState(false);
@@ -28,10 +29,9 @@ export default function App() {
   // Request permissions for camera and media library
   useEffect(() => {
     (async () => {
-      const cameraPermission = await Camera.requestCameraPermissionsAsync();
-      const mediaLibraryPermission =
-        await MediaLibrary.requestPermissionsAsync();
-      setHasPermission(cameraPermission.status === "granted");
+      const cameraPermission = await CameraView.requestCameraPermissionsAsync();
+      const mediaLibraryPermission = await MediaLibrary.requestPermissionsAsync();
+      setHasPermission(cameraPermission.status === "granted" && mediaLibraryPermission.status === "granted");
     })();
   }, []);
 
@@ -41,12 +41,12 @@ export default function App() {
 
   if (!permission.granted) {
     return (
-      <SafeAreaView>
-        <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.messageContainer}>
           <Text style={styles.message}>
             We need your permission to show the camera
           </Text>
-          <Button onPress={requestPermission} title="Grant Permission" />
+          <Button type="primary" onPress={requestPermission} title="Grant Permission" />
         </View>
       </SafeAreaView>
     );
@@ -84,7 +84,7 @@ export default function App() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All, // Allow both images and videos
       allowsEditing: false,
-      quality: 1,
+      quality: 0.7,
     });
     console.log(result);
 
@@ -112,9 +112,7 @@ export default function App() {
         </Modal>
       ) : (
         <>
-          {/* Camera */}
           <CameraView style={styles.camera} ref={cameraRef} />
-
           <View style={styles.cameraOverlay}>
             <TouchableOpacity></TouchableOpacity>
             <TouchableOpacity style={styles.cameraButton} onPress={savePhoto}>
@@ -136,6 +134,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     position: "relative",
+  },
+  messageContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  message: {
+    fontSize: 18,
+    marginBottom: 20,
   },
   camera: {
     flex: 1,
