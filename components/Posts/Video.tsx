@@ -26,10 +26,12 @@ import CommentSectionOverlay from "./Comments";
 import { Video } from "expo-av";
 import BackButton from "@components/back";
 import RightIcon from "@components/RightIcon";
+import Options from "./Options";
 
 const VideoPost = ({ post, isVisible }) => {
   const videoRef = useRef(null);
   const {
+    postUserUuid = post.uuid,
     postId = post.postId || "123",
     profileImage = post.userProfile || "https://via.placeholder.com/150",
     userName = post.userName || "Anonymous",
@@ -46,10 +48,9 @@ const VideoPost = ({ post, isVisible }) => {
   const animationOpacity = useRef(new Animated.Value(0)).current;
   const [isCommentOverlayVisible, setCommentOverlayVisible] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
+  const [optionModal, setOptionModal] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(true);
   const [status, setStatus] = useState({});
-
-
 
   const handleVideoLoadStart = () => {
     setIsVideoLoading(true);
@@ -128,8 +129,6 @@ const VideoPost = ({ post, isVisible }) => {
   }
 
 
-
-
   return (
     <View style={styles.container}>
       {loading ? (
@@ -176,7 +175,7 @@ const VideoPost = ({ post, isVisible }) => {
                 </TouchableOpacity>
               </View>
             </View>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => setOptionModal(true)}>
               <MaterialCommunityIcons
                 name="dots-vertical"
                 size={24}
@@ -268,17 +267,15 @@ const VideoPost = ({ post, isVisible }) => {
       >
         <View style={styles.modalContent}>
           <RightIcon icon="back" onPress={() => setModalVisible(false)} />
-          <TouchableOpacity onPress={() => console.log("Play Video")}>
-            <View>
-              <Video
-                source={{ uri: videoUrl }}
-                style={styles.fullScreenVideo}
-                isMuted={false}
-                useNativeControls
-                isLooping
-              />
-            </View>
-          </TouchableOpacity>
+          <View>
+            <Video
+              source={{ uri: videoUrl }}
+              style={styles.fullScreenVideo}
+              isMuted={false}
+              useNativeControls
+              isLooping
+            />
+          </View>
           <View style={styles.socialIconsModal}>
             <TouchableOpacity
               onPress={handleLike}
@@ -321,12 +318,21 @@ const VideoPost = ({ post, isVisible }) => {
           </View>
         </View>
       </Modal >
-
-      <CommentSectionOverlay
-        isVisible={isCommentOverlayVisible}
-        onClose={() => setCommentOverlayVisible(false)}
-        postId={postId}
-      />
+      {isCommentOverlayVisible && (
+        <CommentSectionOverlay
+          isVisible={isCommentOverlayVisible}
+          onClose={() => setCommentOverlayVisible(false)}
+          postId={postId}
+        />
+      )}
+      {optionModal && (
+        <Options
+          isVisible={optionModal}
+          onClose={() => setOptionModal(false)}
+          postId={postId}
+          postUserUuid={postUserUuid}
+        />
+      )}
     </View >
   );
 };
@@ -416,23 +422,12 @@ const styles = StyleSheet.create({
 
   },
   fullScreenVideo: {
-    width: "100%",
-    height: "100%",
-  },
-  closeButton: {
-    position: "absolute",
-    backgroundColor: "white",
-    top: 10,
-    right: 10,
-    padding: 10,
-    borderRadius: 5,
-  },
-  closeText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "black",
+    width: Dimensions.get("window").width,
+    height: Dimensions.get("window").height / 2,
   },
 });
+
+
 
 export default VideoPost;
 

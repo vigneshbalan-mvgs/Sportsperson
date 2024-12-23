@@ -37,7 +37,6 @@ const Post = ({ post }) => {
     postDescription = post.description || "No description provided",
     type = post.type,
     likes = post.lc || 0,
-    comments = post.comments || [],
   } = post;
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -59,7 +58,6 @@ const Post = ({ post }) => {
 
   const option = () => {
     setModalVisible(true);
-
     console.log("Option clicked");
 
   }
@@ -234,20 +232,24 @@ const Post = ({ post }) => {
       )}
 
       {/* Comment Section Overlay */}
-      <CommentSectionOverlay
-        isVisible={isCommentOverlayVisible}
-        onClose={() => setCommentOverlayVisible(false)}
-        postId={postId}
-      />
+      {isCommentOverlayVisible && (
+        <CommentSectionOverlay
+          isVisible={isCommentOverlayVisible}
+          onClose={() => setCommentOverlayVisible(false)}
+          postId={postId}
+        />
+      )}
 
-      <Options
-        isVisible={isModalVisible}
-        onClose={() => setModalVisible(false)}
-        postId={postId}
-        postUserUuid={userId}
-      />
+      {isModalVisible && (
 
+        <Options
 
+          isVisible={isModalVisible}
+          onClose={() => setModalVisible(false)}
+          postId={postId}
+          postUserUuid={userId}
+        />
+      )}
     </View>
   );
 };

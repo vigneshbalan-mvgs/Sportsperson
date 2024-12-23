@@ -23,28 +23,30 @@ import { colors } from "@/const/colors";
 import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
 import { PORT } from "@/const/PORT";
-import Video from "./Video"; // Assuming Video component handles play/pause
+import Video from "./Video"; // Assuming Video component handles play/pause logic
 
 const API_URL = PORT + "/api/user/home";
 
 const PostMain = () => {
+  // State management
   const [posts, setPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [usedIds, setUsedIds] = useState(new Set());
-  const [token, setToken] = useState(undefined); // Undefined during initialization
-  const [page, setPage] = useState(1); // For pagination
-  const [refreshKey, setRefreshKey] = useState(0); // Key to force re-render
-  const [visibleVideoIndex, setVisibleVideoIndex] = useState(null); // Track the index of the visible video
+  const [token, setToken] = useState(undefined);
+  const [page, setPage] = useState(1);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [visibleVideoIndex, setVisibleVideoIndex] = useState(null);
+
   const debounce = useRef(false);
 
+  // Fetch token and authenticate user
   useEffect(() => {
     const getToken = async () => {
       try {
         const storedToken = await SecureStore.getItemAsync("token");
         if (storedToken) {
-          const sanitizedToken = storedToken.replace(/^"|"$/g, ""); // Clean the token
-          setToken(sanitizedToken);
+          setToken(storedToken.replace(/^"|"$/g, "")); // Clean token
         } else {
           router.replace("/login");
         }
@@ -63,12 +65,13 @@ const PostMain = () => {
     }
   }, [token]);
 
+  // Fetch posts
   const fetchPosts = async (reset = false) => {
     if (!token) return;
 
     try {
       const currentPage = reset ? 1 : page;
-      const response = await fetch(`${API_URL}?page=${currentPage}&&limit=5`, {
+      const response = await fetch(`${API_URL}?page=${currentPage}&limit=5`, {
         method: "GET",
         headers: {
           authorization: `Bearer ${token}`,
@@ -91,43 +94,40 @@ const PostMain = () => {
           setUsedIds((prevIds) =>
             new Set([...prevIds, ...newPosts.map((post) => post.postId)])
           );
-        }
-
-        if (reset) {
-          setPage(2);
-        } else {
-          setPage((prevPage) => prevPage + 1);
+          setPage(reset ? 2 : page + 1); // Update page after each fetch
         }
       } else {
         Alert.alert("Error", data.message || "Failed to fetch posts.");
       }
     } catch (error) {
       console.error("Error fetching posts:", error);
-      Alert.alert(
-        "Error",
-        `${error.message} try to login again` ||
-        "Unable to load posts. Please try again later."
-      );
+      Alert.alert("Error", error.message || "Unable to load posts.");
     }
   };
-
   const onRefresh = useCallback(() => {
+    if (!token) return; // Ensure token is available
     setRefreshing(true);
-    setPage(1);
+
+    // Reset states and fetch new posts
     setPosts([]);
     setUsedIds(new Set());
-    setRefreshKey((prevKey) => prevKey + 1);
-    fetchPosts(true).finally(() => setRefreshing(false));
-  }, [fetchPosts]);
+    setPage(1);
+
+    fetchPosts(true)
+      .catch((error) => {
+        console.error("Error refreshing posts:", error);
+        Alert.alert("Error", error.message || "Unable to refresh posts.");
+      })
+      .finally(() => setRefreshing(false)); // Set refreshing to false after fetch
+  }, [token, fetchPosts]);
 
   const loadMorePosts = async () => {
+    console.log("isFetchingMore:", isFetchingMore); // Debugging
     if (isFetchingMore || !token) return;
 
     setIsFetchingMore(true);
     try {
       await fetchPosts();
-
-      setPage((prevPage) => prevPage + 1);
     } catch (error) {
       console.error("Error loading more posts:", error);
     } finally {
@@ -141,6 +141,7 @@ const PostMain = () => {
     }
   }, [token]);
 
+  // Render post component
   const renderPost = useMemo(() => {
     return ({ item, index }) => (
       <GestureHandlerRootView>
@@ -149,7 +150,7 @@ const PostMain = () => {
         ) : (
           <Video
             post={item}
-            isVisible={index === visibleVideoIndex} // Pass visibility to the Video component
+            isVisible={index === visibleVideoIndex}
           />
         )}
       </GestureHandlerRootView>
@@ -165,37 +166,37 @@ const PostMain = () => {
     );
   };
 
+  // Track visible items for video autoplay
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
-    // Adjust the threshold for video visibility
-    const threshold = 0.5; // Set this value to determine when the video should play (e.g., 30% visible)
-    const visibleIndex = viewableItems.findIndex(
-      (item) => item.isViewable && item.index !== undefined
+    const threshold = 1; // Visibility threshold
+    const visibleItem = viewableItems.find(
+      (item) =>
+        item.isViewable &&
+        item.index !== undefined &&
+        item.item.type === "video"
     );
 
-    if (visibleIndex !== -1) {
-      const item = viewableItems[visibleIndex];
-      const isVisible = item.item.index >= threshold;
-      setVisibleVideoIndex(isVisible ? item.index : null); // Update visible video index
-    }
+    setVisibleVideoIndex(
+      visibleItem && visibleItem.index >= threshold ? visibleItem.index : null
+    );
   });
 
   return (
     <View style={styles.container}>
       <FlatList
-        windowSize={10}
-        key={refreshKey}
         data={posts}
+        key={refreshKey}
         keyExtractor={(item) => item.postId.toString()}
         renderItem={renderPost}
         onEndReached={loadMorePosts}
-        onEndReachedThreshold={0.2}
+        onEndReachedThreshold={0.5}
         ListFooterComponent={renderFooter}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[colors.primary, colors.secondary, colors.primary]}
+            colors={[colors.primary, colors.secondary]}
           />
         }
         initialNumToRender={10}
@@ -208,6 +209,7 @@ const PostMain = () => {
 
 export default PostMain;
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,

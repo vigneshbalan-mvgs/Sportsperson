@@ -4,35 +4,28 @@ import {
   Text,
   StyleSheet,
   Modal,
-  ScrollView,
   TouchableWithoutFeedback,
   Image,
-  PanResponder,
   ActivityIndicator,
   Animated,
-  StatusBar,
+  FlatList,
+  TouchableOpacity,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { colors } from "@/const/colors";
 import TextInputComponent from "@components/TextInput";
 import * as SecureStore from "expo-secure-store";
-import Button from "@/components/Button"
+import Button from "@/components/Button";
+import { AntDesign } from "@expo/vector-icons";
 
 const CommentSectionOverlay = ({ isVisible, onClose, postId }) => {
   const [comments, setComments] = useState([]);
   const [commentInput, setCommentInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const slideAnim = useRef(new Animated.Value(1000)).current; // Start off-screen
-
-
-  const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onPanResponderMove: (e, gestureState) => {
-      if (gestureState.dy > 100) {
-        closeOverlay(); // Close the modal when the user swipes down by 100 pixels
-      }
-    },
-    onPanResponderRelease: () => { },
-  });
+  const [isFullscreen, setIsFullscreen] = useState(false); // State for fullscreen toggle
+  const slideAnim = useRef(new Animated.Value(1000)).current; // For animation
 
   useEffect(() => {
     if (isVisible) {
@@ -73,10 +66,8 @@ const CommentSectionOverlay = ({ isVisible, onClose, postId }) => {
       };
       const response = await fetch(url, options);
       const data = await response.json();
-      if (data.success) {
-        setComments(data.data || []); // Assuming `data.comments` contains the comment list
-        console.log(comments)
-        console.log(postId);
+      if (data.status) {
+        setComments(data.data || []);
       }
     } catch (error) {
       console.error("Error fetching comments:", error);
@@ -84,10 +75,9 @@ const CommentSectionOverlay = ({ isVisible, onClose, postId }) => {
   };
 
   const handlePostComment = async () => {
-    if (commentInput.trim() === "") return; // Prevent posting empty comments
+    if (commentInput.trim() === "") return;
     const sanitizedToken = await SecureStore.getItemAsync("token");
-    const token = sanitizedToken?.replace(/^"|"$/g, ""); // Removes leading and trailing quotes
-
+    const token = sanitizedToken?.replace(/^"|"$/g, "");
 
     setLoading(true);
     const url = `https://sportspersonz.com/api/user/comment/${postId}`;
@@ -95,7 +85,6 @@ const CommentSectionOverlay = ({ isVisible, onClose, postId }) => {
       method: "POST",
       headers: {
         authorization: `Bearer ${token}`,
-
         "content-type": "application/json",
       },
       body: JSON.stringify({ comment: commentInput }),
@@ -104,17 +93,14 @@ const CommentSectionOverlay = ({ isVisible, onClose, postId }) => {
     try {
       const response = await fetch(url, options);
       const data = await response.json();
-      console.log(data)
       if (data.success) {
-        setComments([
-          ...comments,
-          { comment: commentInput, createdAt: new Date() },
-        ]);
-        setCommentInput(""); // Clear input after posting
+        setCommentInput("");
       }
     } catch (error) {
       console.error("Error posting comment:", error);
     } finally {
+      fetchComments();
+      setCommentInput("");
       setLoading(false);
     }
   };
@@ -127,14 +113,13 @@ const CommentSectionOverlay = ({ isVisible, onClose, postId }) => {
         authorization: "Bearer YOUR_BEARER_TOKEN",
         "content-type": "application/json",
       },
-      body: JSON.stringify({ commentBy: ["YOUR_USER_ID"] }),
     };
 
     try {
       const response = await fetch(url, options);
       const data = await response.json();
       if (data.success) {
-        setComments(comments.filter((comment) => comment.id !== commentId)); // Remove deleted comment from UI
+        setComments(comments.filter((comment) => comment._id !== commentId));
       }
     } catch (error) {
       console.error("Error deleting comment:", error);
@@ -150,6 +135,22 @@ const CommentSectionOverlay = ({ isVisible, onClose, postId }) => {
     });
   };
 
+  const renderItem = ({ item }) => (
+    <View style={overlayStyles.commentContainer}>
+      <Image
+        source={{ uri: item.Img || "https://placehold.co/40x40" }}
+        style={overlayStyles.avatar}
+      />
+      <View style={overlayStyles.commentContent}>
+        <Text style={overlayStyles.username}>{item.username || "Unknown"}</Text>
+        <Text style={overlayStyles.commentText}>{item.comment}</Text>
+        <Text style={overlayStyles.commentDate}>
+          {formatDate(item.createdAt)}
+        </Text>
+      </View>
+    </View>
+  );
+
   return (
     <Modal
       animationType="none"
@@ -158,57 +159,68 @@ const CommentSectionOverlay = ({ isVisible, onClose, postId }) => {
       onRequestClose={closeOverlay}
       statusBarTranslucent
     >
-      <TouchableWithoutFeedback onPress={closeOverlay}>
+      <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
         <View style={overlayStyles.overlayContainer}>
           <Animated.View
             style={[
               overlayStyles.overlayContent,
-              { transform: [{ translateY: slideAnim }] },
+              {
+                transform: [{ translateY: slideAnim }],
+                height: isFullscreen ? "100%" : "50%", // Fullscreen mode toggle
+              },
             ]}
-            {...panResponder.panHandlers}
           >
+            {/* Close Button */}
+            <View style={overlayStyles.closeButtonContainer}>
+              <TouchableOpacity
+                style={overlayStyles.closeButton}
+                onPress={() => setIsFullscreen((prev) => !prev)}
+              >
+                <AntDesign name="upload" size={24} color={colors.primary} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={overlayStyles.closeButton}
+                onPress={closeOverlay}
+              >
+                <AntDesign name="close" size={24} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
+
+
             <Text style={overlayStyles.title}>Comments</Text>
-            <ScrollView style={overlayStyles.scrollContainer}>
-              {comments.length > 0 ? (
-                comments.map((comment) => (
-                  <View key={comment._id} style={overlayStyles.commentContainer}>
-                    <Image
-                      source={{ uri: comment.Img || "https://placehold.co/40x40" }} // Fallback for missing images
-                      style={overlayStyles.avatar}
-                    />
-                    <View style={overlayStyles.commentContent}>
-                      <Text style={overlayStyles.username}>{comment.username || "Unknown"}</Text>
-                      <Text style={overlayStyles.commentText}>{comment.comment}</Text>
-                      <Text style={overlayStyles.commentDate}>
-                        {formatDate(comment.createdAt)}
-                      </Text>
-                    </View>
-                  </View>
-                ))
-              ) : (
-                <Text style={overlayStyles.comment}>No comments yet</Text>
-              )}
-            </ScrollView>
+
+            <FlatList
+              data={comments}
+              renderItem={renderItem}
+              keyExtractor={(item) => item._id.toString()}
+              style={overlayStyles.scrollContainer}
+              ListEmptyComponent={<Text style={overlayStyles.comment}>No comments yet</Text>}
+            />
 
             {loading ? (
               <ActivityIndicator size="large" color={colors.primary} />
             ) : (
-              <View style={overlayStyles.commentInputContainer}>
-                <TextInputComponent
-                  placeholder="Write a comment..."
-                  value={commentInput}
-                  onChangeText={setCommentInput}
-                  style={{ flex: 1, paddingRight: 10 }}
-                />
-                <Button
-                  title="Post"
-                  type="primaryAuto"
-                  onPress={handlePostComment}
-                  disabled={loading}
-                />
-              </View>
+              <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={overlayStyles.commentInputContainer}
+              ><View style={overlayStyles.commentInput}>
+                  <TextInputComponent
+                    placeholder="Write a comment..."
+                    value={commentInput}
+                    onChangeText={setCommentInput}
+                    style={{ flex: 1, paddingRight: 10 }}
+                  />
+
+                  <TouchableOpacity
+                    onPress={handlePostComment}
+                    disabled={loading}
+                  >
+                    <AntDesign name="arrowup" size={24} color={colors.primary} /></TouchableOpacity>
+                </View>
+              </KeyboardAvoidingView>
             )}
 
+            {/* Fullscreen Toggle Button */}
           </Animated.View>
         </View>
       </TouchableWithoutFeedback>
@@ -227,12 +239,29 @@ const overlayStyles = StyleSheet.create({
   },
   overlayContent: {
     width: "100%",
-    height: "50%",
     backgroundColor: "#fff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
     alignItems: "flex-start",
+  },
+  closeButtonContainer: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    gap: 10,
+    flexDirection: "row",
+  },
+  closeButton: {
+    backgroundColor: colors.background,
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+  },
+  closeText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 18,
   },
   title: {
     fontSize: 18,
@@ -272,11 +301,30 @@ const overlayStyles = StyleSheet.create({
     fontSize: 12,
     color: "#888",
   },
+  commentInput: {
+    position: "absolute",
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    backgroundColor: colors.background,
+  },
   commentInputContainer: {
     flexDirection: "row",
     width: "100%",
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  fullscreenButton: {
+    bottom: 10,
+    left: "50%",
+    transform: [{ translateX: -50 }],
+    backgroundColor: "#007bff",
+    padding: 10,
+    borderRadius: 20,
+  },
+  fullscreenText: {
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
 

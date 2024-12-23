@@ -131,7 +131,7 @@ const ProfilePosts = () => {
   const renderPost = useMemo(
     () => ({ item }) => (
       <GestureHandlerRootView>
-        {item.type === "image" ? <Post post={item} /> : <Video post={item} />}
+        {item.type === "image" ? <Post post={item} /> : <Video post={item} isVisible={true} />}
       </GestureHandlerRootView>
     ),
     []

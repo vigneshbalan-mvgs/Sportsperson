@@ -8,17 +8,19 @@ import {
   Animated,
   ActivityIndicator,
   TextInput,
-  Button as RNButton,
 } from "react-native";
 import { colors } from "@/const/colors";
 import * as SecureStore from "expo-secure-store";
+import Button from "@/components/Button";
 
 const Options = ({ isVisible, onClose, postId, postUserUuid }) => {
   const [loading, setLoading] = useState(false);
-  const [currentUserUuid, setCurrentUserUuid] = useState(null);
-  const [reporting, setReporting] = useState(false); // Track if report option is selected
-  const [reportReason, setReportReason] = useState(""); // Store the report reason
-  const slideAnim = useRef(new Animated.Value(1000)).current; // Start off-screen
+  const [currentUserUuid, setCurrentUserUuid] = useState("");
+  const [reporting, setReporting] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const slideAnim = useRef(new Animated.Value(1000)).current;
+
+  console.log(isVisible, onClose, postId, postUserUuid);
 
   useEffect(() => {
     if (isVisible) {
@@ -26,6 +28,7 @@ const Options = ({ isVisible, onClose, postId, postUserUuid }) => {
       fetchCurrentUserUuid();
     } else {
       closeOverlay();
+      resetStates();
     }
   }, [isVisible]);
 
@@ -45,48 +48,39 @@ const Options = ({ isVisible, onClose, postId, postUserUuid }) => {
     }).start(() => onClose());
   };
 
-  // Fetch current user UUID from SecureStore
+  const resetStates = () => {
+    setLoading(false);
+    setReporting(false);
+    setReportReason("");
+  };
+
   const fetchCurrentUserUuid = async () => {
-    const sanitizedToken = await SecureStore.getItemAsync("token");
-    const token = sanitizedToken?.replace(/^"|"$/g, ""); // Removes leading and trailing quotes
-
     try {
-
       const data = await SecureStore.getItemAsync("Uuid");
-      setCurrentUserUuid(data); // Assuming UUID is stored in data.uuid
-      console.log(data)
-    }
-    catch (error) {
+      setCurrentUserUuid(data);
+      console.log("Fetched UUID:", data);
+    } catch (error) {
       console.error("Error fetching user UUID:", error);
     }
-    finally {
-      setLoading(false);
-
-    }
-  }
+  };
 
   const handleDeletePost = async () => {
-    if (!currentUserUuid) return; // Prevent if current user UUID is not available
+    if (!currentUserUuid) return console.error("User UUID not available");
 
     setLoading(true);
-    const sanitizedToken = await SecureStore.getItemAsync("token");
-    const token = sanitizedToken?.replace(/^"|"$/g, ""); // Removes leading and trailing quotes
-
-    const url = `https://sportspersonz.com/api/user/delete/${postId}`;
-    const options = {
-      method: "DELETE",
-      headers: {
-        authorization: `Bearer ${token}`,
-        "content-type": "application/json",
-      },
-    };
-
     try {
-      const response = await fetch(url, options);
+      const token = (await SecureStore.getItemAsync("token"))?.replace(/^"|"$/g, "");
+      const response = await fetch(`https://sportspersonz.com/api/user/delete/${postId}`, {
+        method: "DELETE",
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+        },
+      });
       const data = await response.json();
       if (data.success) {
         console.log("Post deleted successfully");
-        onClose(); // Close the modal after deleting the post
+        onClose();
       } else {
         console.error("Failed to delete post");
       }
@@ -98,28 +92,23 @@ const Options = ({ isVisible, onClose, postId, postUserUuid }) => {
   };
 
   const handleReportPost = async () => {
-    if (!reportReason.trim()) return; // Prevent submitting empty reports
+    if (!reportReason.trim()) return console.error("Please enter a reason for reporting");
 
     setLoading(true);
-    const sanitizedToken = await SecureStore.getItemAsync("token");
-    const token = sanitizedToken?.replace(/^"|"$/g, ""); // Removes leading and trailing quotes
-
-    const url = `https://sportspersonz.com/api/user/report/${postId}`;
-    const options = {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${token}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ reason: reportReason }),
-    };
-
     try {
-      const response = await fetch(url, options);
+      const token = (await SecureStore.getItemAsync("token"))?.replace(/^"|"$/g, "");
+      const response = await fetch(`https://sportspersonz.com/api/user/report/${postId}`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ reason: reportReason }),
+      });
       const data = await response.json();
       if (data.success) {
         console.log("Post reported successfully");
-        onClose(); // Close the modal after reporting the post
+        onClose();
       } else {
         console.error("Failed to report post");
       }
@@ -133,26 +122,26 @@ const Options = ({ isVisible, onClose, postId, postUserUuid }) => {
   return (
     <Modal
       animationType="none"
-      transparent={true}
+      transparent
       visible={isVisible}
       onRequestClose={closeOverlay}
       statusBarTranslucent
     >
       <TouchableWithoutFeedback onPress={closeOverlay}>
-        <View style={overlayStyles.overlayContainer}>
-          <Animated.View
-            style={[
-              overlayStyles.overlayContent,
-              { transform: [{ translateY: slideAnim }] },
-            ]}
-          >
-            <View style={overlayStyles.card}>
-              {/* If in Reporting mode, show the report reason input */}
-              {reporting ? (
+        <View style={styles.overlayContainer}>
+          <Animated.View style={[styles.overlayContent, { transform: [{ translateY: slideAnim }] }]}>
+            <View style={styles.card}>
+              {currentUserUuid === postUserUuid ? ( // Owner can delete
+                loading ? (
+                  <ActivityIndicator size="large" color={colors.primary} />
+                ) : (
+                  <Button title="Delete Post" type="primaryAuto" onPress={handleDeletePost} />
+                )
+              ) : reporting ? ( // Non-owner can report
                 <>
-                  <Text style={overlayStyles.label}>Report Reason</Text>
+                  <Text style={styles.label}>Report Reason</Text>
                   <TextInput
-                    style={overlayStyles.input}
+                    style={styles.input}
                     placeholder="Enter reason for reporting"
                     value={reportReason}
                     onChangeText={setReportReason}
@@ -160,33 +149,12 @@ const Options = ({ isVisible, onClose, postId, postUserUuid }) => {
                   {loading ? (
                     <ActivityIndicator size="large" color={colors.primary} />
                   ) : (
-                    <RNButton title="Submit Report" onPress={handleReportPost} />
+                    <Button title="Submit Report" type="primaryAuto" onPress={handleReportPost} />
                   )}
-                  <RNButton
-                    title="Cancel"
-                    onPress={() => setReporting(false)} // Go back to the options screen
-
-                  />
+                  <Button title="Cancel" type="secondaryAuto" onPress={() => setReporting(false)} />
                 </>
               ) : (
-                <>
-                  {/* Show Delete button if current user is the post owner */}
-                  {currentUserUuid === postUserUuid && (
-                    <>
-                      {loading ? (
-                        <ActivityIndicator size="large" color={colors.primary} />
-                      ) : (
-                        <RNButton title="Delete Post" onPress={handleDeletePost} />
-                      )}
-                    </>
-                  )}
-
-                  {/* Report button */}
-                  <RNButton
-                    title="Report Post"
-                    onPress={() => setReporting(true)} // Switch to reporting mode
-                  />
-                </>
+                <Button title="Report Post" type="primaryAuto" onPress={() => setReporting(true)} />
               )}
             </View>
           </Animated.View>
@@ -196,38 +164,25 @@ const Options = ({ isVisible, onClose, postId, postUserUuid }) => {
   );
 };
 
-const overlayStyles = StyleSheet.create({
+const styles = StyleSheet.create({
   overlayContainer: {
-    position: "absolute",
-    width: "100%",
-    height: "100%", // Fullscreen height
-    justifyContent: "center", // Center the content vertically
-    alignItems: "center", // Center the content horizontally
-    backgroundColor: "rgba(0, 0, 0, 0.5)", // Dim the background
-  },
-  overlayContent: {
-    width: "100%", // Full width
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
+  },
+  overlayContent: {
+    width: "100%",
     padding: 20,
+    alignItems: "center",
   },
   card: {
-    width: "90%", // Set the card width to 90% of the screen
-    maxWidth: 400, // Limit the card size for larger screens
+    width: "90%",
+    maxWidth: 400,
     backgroundColor: "#fff",
     borderRadius: 15,
     padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5, // For Android shadow
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 10,
-    textAlign: "center",
+    elevation: 5,
   },
   label: {
     fontSize: 18,
